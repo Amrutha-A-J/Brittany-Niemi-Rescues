@@ -16,7 +16,7 @@ export type DemoDB = {
 };
 
 // Bump when seed.json changes so visitors get the new sample data.
-const KEY = "bnr-demo-v3";
+const KEY = "bnr-demo-v4";
 const SESSION_KEY = "bnr-demo-session";
 
 const fresh = (): DemoDB =>

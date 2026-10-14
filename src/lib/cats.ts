@@ -1,4 +1,5 @@
 import type { Cat, CatCategory, CatView } from "./types";
+import { site } from "./site";
 
 export const CATEGORIES: { value: CatCategory; label: string; plural: string }[] = [
   { value: "kitten", label: "Kitten", plural: "Kittens" },
@@ -92,7 +93,7 @@ export function slugify(input: string) {
 
 export function metaDescription(cat: CatView) {
   const kind = cat.ageMonths < 12 ? "kitten" : "cat";
-  const base = `Meet ${cat.name}, a ${cat.ageLabel} old ${cat.sex} ${cat.color.toLowerCase()} ${kind} looking for a home in Moose Jaw, Saskatchewan.`;
+  const base = `Meet ${cat.name}, a ${cat.ageLabel} old ${cat.sex} ${cat.color.toLowerCase()} ${kind} looking for a home in ${site.city}, ${site.region}.`;
   const extra = cat.description ? ` ${cat.description}` : "";
   const text = (base + extra).replace(/\s+/g, " ").trim();
   return text.length > 158 ? text.slice(0, 155).replace(/\s+\S*$/, "") + "…" : text;

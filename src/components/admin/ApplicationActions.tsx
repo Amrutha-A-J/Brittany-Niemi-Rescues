@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { approveApplication, rejectApplication, scheduleMeeting } from "@/lib/admin/application-actions";
 import type { FormState } from "@/lib/admin/auth-actions";
 import { StatusMessage, SubmitButton } from "./Forms";
+import { site } from "@/lib/site";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
 
@@ -51,7 +52,7 @@ function MeetForm({ id, defaultWhen, actions = serverActions }: Props) {
       <input type="hidden" name="id" value={id} />
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
-          <span className="field-label">Date &amp; time (Moose Jaw time)</span>
+          <span className="field-label">Date &amp; time ({site.city} time)</span>
           <input type="datetime-local" name="when" required defaultValue={defaultWhen} className="field" />
         </label>
         <label className="block">

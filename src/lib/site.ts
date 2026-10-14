@@ -1,7 +1,7 @@
 export const site = {
   name: "Brittany Niemi Rescues",
   shortName: "BNR",
-  city: "Moose Jaw",
+  city: "Regina",
   region: "Saskatchewan",
   regionCode: "SK",
   country: "CA",
@@ -11,7 +11,7 @@ export const site = {
   instagram: "brittany.niemi.rescues",
   url: (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, ""),
   description:
-    "Cat rescue in Moose Jaw, Saskatchewan. We rescue, foster and rehome cats of every age, from bottle babies to golden-years seniors and the ones who need a little extra care.",
+    "Cat rescue in Regina, Saskatchewan. We rescue, foster and rehome cats of every age, from bottle babies to golden-years seniors and the ones who need a little extra care.",
 };
 
 export const instagramUrl = `https://www.instagram.com/${site.instagram}/`;

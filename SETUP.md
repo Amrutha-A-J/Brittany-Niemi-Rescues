@@ -159,5 +159,5 @@ The app sends these emails:
 - [ ] Remove `NEXT_PUBLIC_NOINDEX`
 - [ ] Delete the sample cats and the demo login, then create her real login
 - [ ] Add the site in [Google Search Console](https://search.google.com/search-console) and submit `https://<domain>/sitemap.xml`
-- [ ] Create a free [Google Business Profile](https://business.google.com) for the rescue in Moose Jaw
+- [ ] Create a free [Google Business Profile](https://business.google.com) for the rescue in Regina
 - [ ] Put the website link in the Instagram bio

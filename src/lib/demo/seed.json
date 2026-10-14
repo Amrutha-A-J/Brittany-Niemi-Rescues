@@ -505,7 +505,7 @@
       "name": "Morgan Lee",
       "email": "morgan@example.com",
       "phone": "306-555-0142",
-      "city": "Moose Jaw",
+      "city": "Regina",
       "answers": {
         "home_type": "House",
         "own_or_rent": "Own",
@@ -514,7 +514,7 @@
         "indoor_only": "Yes, indoor only",
         "hours_alone": "4–8",
         "experience": "I've had cats my whole life.",
-        "vet": "Moose Jaw Animal Hospital",
+        "vet": "Our family vet in Regina",
         "why": "Juniper's independent streak sounds just like our current cat, and they'd keep each other company."
       },
       "admin_notes": "",
@@ -530,7 +530,7 @@
       "name": "Sam Patel",
       "email": "sam@example.com",
       "phone": "306-555-0187",
-      "city": "Regina",
+      "city": "White City",
       "answers": {
         "home_type": "House",
         "own_or_rent": "Rent",
@@ -556,7 +556,7 @@
       "name": "Taylor Brooks",
       "email": "taylor@example.com",
       "phone": "306-555-0119",
-      "city": "Moose Jaw",
+      "city": "Regina",
       "answers": {
         "home_type": "Apartment",
         "own_or_rent": "Rent",
@@ -586,7 +586,7 @@
       "name": "Chris Nguyen",
       "email": "chris@example.com",
       "phone": "306-555-0164",
-      "city": "Moose Jaw",
+      "city": "Regina",
       "answers": {
         "home_type": "Condo / townhouse",
         "own_or_rent": "Own",
@@ -610,7 +610,7 @@
       "application_id": "app-sam",
       "starts_at": "2026-10-20T00:00:00.000Z",
       "duration_minutes": 60,
-      "location": "Foster home, Moose Jaw (address sent by text)",
+      "location": "Foster home, Regina (address sent by text)",
       "notes": "Bring the dog's vaccination records.",
       "status": "scheduled",
       "created_at": "2026-10-11T18:00:00.000Z"
@@ -625,7 +625,7 @@
       "adopter_name": "Chris Nguyen",
       "adopter_email": "chris@example.com",
       "adopter_phone": "306-555-0164",
-      "adopter_address": "Moose Jaw",
+      "adopter_address": "Regina",
       "fee_paid": 150,
       "microchip_number": "985112009876543",
       "follow_up_on": "2026-10-15",
@@ -640,7 +640,7 @@
       "name": "Jess Martin",
       "email": "jess@example.com",
       "phone": "306-555-0123",
-      "city": "Moose Jaw",
+      "city": "Regina",
       "can_foster": [
         "Kittens",
         "Bottle babies",
@@ -657,7 +657,7 @@
       "name": "Dana Klassen",
       "email": "dana@example.com",
       "phone": "306-555-0148",
-      "city": "Moose Jaw",
+      "city": "Regina",
       "can_foster": [
         "Adult cats",
         "Seniors"
@@ -673,7 +673,7 @@
       "name": "Alex Chen",
       "email": "alex@example.com",
       "phone": "306-555-0156",
-      "city": "Moose Jaw",
+      "city": "Regina",
       "can_foster": [
         "Seniors",
         "Medical / special needs"
@@ -689,7 +689,7 @@
       "name": "Priya Shah",
       "email": "priya@example.com",
       "phone": "306-555-0172",
-      "city": "Moose Jaw",
+      "city": "Regina",
       "can_foster": [
         "Adult cats"
       ],

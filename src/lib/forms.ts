@@ -1,4 +1,5 @@
 import type { ApplicationType } from "./types";
+import { site } from "./site";
 
 export type FieldDef = {
   name: string;
@@ -19,7 +20,7 @@ export const contactFields: FieldDef[] = [
   { name: "name", label: "Full name", type: "text", required: true },
   { name: "email", label: "Email", type: "email", required: true },
   { name: "phone", label: "Phone", type: "tel", required: true },
-  { name: "city", label: "Town or city", type: "text", required: true, placeholder: "Moose Jaw" },
+  { name: "city", label: "Town or city", type: "text", required: true, placeholder: site.city },
 ];
 
 const homeFields: FieldDef[] = [

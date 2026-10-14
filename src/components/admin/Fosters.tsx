@@ -10,6 +10,7 @@ import type { Foster, FosterWithPlacements } from "@/lib/types";
 import { FilterBar, filterPanelClass } from "./FilterBar";
 import { ActionForm, ConfirmSubmit, StatusMessage, SubmitButton } from "./Forms";
 import { Card, Empty, PageHeader, rowButton, rowDangerButton } from "./ui";
+import { site } from "@/lib/site";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
 type FormAction = (formData: FormData) => void | Promise<void>;
@@ -242,7 +243,7 @@ export function FosterDetailsForm({ foster, action, submitLabel }: { foster?: Fo
       </div>
       <label className="block">
         <span className="field-label">Town or city</span>
-        <input name="city" className="field" defaultValue={foster?.city ?? "Moose Jaw"} />
+        <input name="city" className="field" defaultValue={foster?.city ?? site.city} />
       </label>
       <fieldset>
         <legend className="field-label">Can foster</legend>
