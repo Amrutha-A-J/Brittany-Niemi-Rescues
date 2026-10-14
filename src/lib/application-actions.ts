@@ -27,7 +27,7 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
 
   const supabase = createPublicClient();
   let cat: { id: string; name: string } | null = null;
-  if (type === "adopt" && catSlug) {
+  if (catSlug) {
     const { data } = await supabase.from("cats").select("id, name").eq("slug", catSlug).maybeSingle();
     cat = data;
   }
@@ -50,7 +50,14 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
     return { error: "Something went wrong sending your application. Please try again." };
   }
 
-  const about = type === "adopt" ? (cat ? `for ${cat.name}` : "(no specific cat)") : "to foster";
+  const about =
+    type === "adopt"
+      ? cat
+        ? `for ${cat.name}`
+        : "(no specific cat)"
+      : cat
+        ? `to foster ${cat.name}`
+        : "to foster (open to any cat)";
   const firstName = contact.name.split(" ")[0];
 
   await Promise.all([

@@ -84,7 +84,7 @@ export async function ApplicationsList({
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{a.name}</span>
                   <span className="block truncate text-xs text-muted">
-                    {type === "adopt" ? `${a.cats?.name ?? "No specific cat"} · ` : ""}
+                    {a.cats?.name ?? (type === "adopt" ? "No specific cat" : "Open to any cat")} ·{" "}
                     {a.city || "—"}
                   </span>
                 </span>

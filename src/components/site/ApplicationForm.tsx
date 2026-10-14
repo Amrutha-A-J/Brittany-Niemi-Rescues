@@ -31,7 +31,7 @@ export function ApplicationForm({
         <p className="mx-auto mt-3 max-w-[420px] text-[15px] leading-relaxed text-muted">
           {type === "adopt"
             ? `Your application${cat ? ` for ${cat.name}` : ""} is on its way to us.`
-            : "Your foster application is on its way to us."}{" "}
+            : `Your foster application${cat ? ` for ${cat.name}` : ""} is on its way to us.`}{" "}
           We read every one personally and will be in touch within a few days. Check your inbox for a confirmation email.
         </p>
         <Link href="/adopt" className="btn-outline mt-8">
@@ -53,23 +53,30 @@ export function ApplicationForm({
         </label>
       </div>
 
-      {type === "adopt" && (
-        <fieldset>
-          <legend className="font-serif text-2xl">Which cat?</legend>
-          <label className="mt-4 block">
-            <span className="field-label">The cat you&apos;d like to adopt</span>
+      <fieldset>
+        <legend className="font-serif text-2xl">Which cat?</legend>
+        <div className="mt-4 space-y-6">
+          <label className="block">
+            <span className="field-label">
+              {type === "adopt" ? "The cat you'd like to adopt" : "The cat you'd like to foster"}
+            </span>
             <select name="cat" className="field" value={values.cat ?? ""} onChange={(e) => set("cat", e.target.value)}>
-              <option value="">Not sure yet, open to suggestions</option>
+              <option value="">{type === "adopt" ? "Not sure yet, open to suggestions" : "I'm open to any cat that needs me"}</option>
               {cats.map((c) => (
                 <option key={c.slug} value={c.slug}>
                   {c.name}
-                  {c.status === "pending" ? " (adoption pending)" : ""}
+                  {type === "adopt" && c.status === "pending" ? " (adoption pending)" : ""}
                 </option>
               ))}
             </select>
           </label>
-        </fieldset>
-      )}
+          {applicationFields[type]
+            .filter((f) => f.group === "cat" && (!f.showIf || f.showIf.values.includes(values[f.showIf.field] ?? "")))
+            .map((f) => (
+              <Field key={f.name} field={f} value={values[f.name] ?? ""} onChange={set} error={errors[f.name]} />
+            ))}
+        </div>
+      </fieldset>
 
       <fieldset>
         <legend className="font-serif text-2xl">About you</legend>
@@ -84,7 +91,7 @@ export function ApplicationForm({
         <legend className="font-serif text-2xl">{type === "adopt" ? "Your home" : "Your home & fostering"}</legend>
         <div className="mt-4 space-y-6">
           {applicationFields[type]
-            .filter((f) => !f.showIf || f.showIf.values.includes(values[f.showIf.field] ?? ""))
+            .filter((f) => !f.group && (!f.showIf || f.showIf.values.includes(values[f.showIf.field] ?? "")))
             .map((f) => (
               <Field key={f.name} field={f} value={values[f.name] ?? ""} onChange={set} error={errors[f.name]} />
             ))}

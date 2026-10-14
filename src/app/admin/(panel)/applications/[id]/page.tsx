@@ -121,20 +121,20 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
                 <dt className="text-xs text-muted">Town or city</dt>
                 <dd>{app.city}</dd>
               </div>
-              {app.type === "adopt" && (
-                <div>
-                  <dt className="text-xs text-muted">Cat</dt>
-                  <dd>
-                    {app.cats ? (
-                      <Link href={`/admin/cats/${app.cats.id}`} className="underline underline-offset-2">
-                        {app.cats.name}
-                      </Link>
-                    ) : (
-                      "No specific cat"
-                    )}
-                  </dd>
-                </div>
-              )}
+              <div>
+                <dt className="text-xs text-muted">Cat</dt>
+                <dd>
+                  {app.cats ? (
+                    <Link href={`/admin/cats/${app.cats.id}`} className="underline underline-offset-2">
+                      {app.cats.name}
+                    </Link>
+                  ) : app.type === "adopt" ? (
+                    "No specific cat"
+                  ) : (
+                    "Open to any cat"
+                  )}
+                </dd>
+              </div>
             </dl>
           </Card>
 

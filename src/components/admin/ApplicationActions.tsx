@@ -110,7 +110,7 @@ function DecisionForm({
         <span className="field-label">Message</span>
         <textarea name="message" rows={5} className="field" defaultValue={defaultMessage} />
       </label>
-      {kind === "approve" && catName && catAvailable && (
+      {kind === "approve" && type === "adopt" && catName && catAvailable && (
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="mark_pending" defaultChecked className="h-4 w-4 accent-ink" />
           Mark {catName} as &ldquo;adoption pending&rdquo; on the website

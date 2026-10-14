@@ -574,7 +574,7 @@ export const DemoApplications = suspended(function DemoApplications({ type }: { 
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">{a.name}</span>
                     <span className="block truncate text-xs text-muted">
-                      {type === "adopt" ? `${cat?.name ?? "No specific cat"} · ` : ""}
+                      {cat?.name ?? (type === "adopt" ? "No specific cat" : "Open to any cat")} ·{" "}
                       {a.city || "—"}
                     </span>
                   </span>
@@ -710,20 +710,20 @@ export const DemoApplication = suspended(function DemoApplication({ id: routeId 
                 <dt className="text-xs text-muted">Town or city</dt>
                 <dd>{app.city}</dd>
               </div>
-              {app.type === "adopt" && (
-                <div>
-                  <dt className="text-xs text-muted">Cat</dt>
-                  <dd>
-                    {cat ? (
-                      <Link href={links.cat(cat.id)} className="underline underline-offset-2">
-                        {cat.name}
-                      </Link>
-                    ) : (
-                      "No specific cat"
-                    )}
-                  </dd>
-                </div>
-              )}
+              <div>
+                <dt className="text-xs text-muted">Cat</dt>
+                <dd>
+                  {cat ? (
+                    <Link href={links.cat(cat.id)} className="underline underline-offset-2">
+                      {cat.name}
+                    </Link>
+                  ) : app.type === "adopt" ? (
+                    "No specific cat"
+                  ) : (
+                    "Open to any cat"
+                  )}
+                </dd>
+              </div>
             </dl>
           </Card>
           <Card title="Private notes">

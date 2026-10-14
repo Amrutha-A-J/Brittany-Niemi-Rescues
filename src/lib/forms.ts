@@ -10,6 +10,8 @@ export type FieldDef = {
   placeholder?: string;
   /** Only shown when another field has one of these values. */
   showIf?: { field: string; values: string[] };
+  /** "cat" fields are shown under the cat choice instead of in the home section. */
+  group?: "cat";
 };
 
 /** Contact fields stored in their own columns on `applications`. */
@@ -38,6 +40,14 @@ export const applicationFields: Record<ApplicationType, FieldDef[]> = {
     { name: "why", label: "Why do you think this cat is a good fit for your home?", type: "textarea", required: true },
   ],
   foster: [
+    {
+      name: "preferences",
+      label: "Any preferences?",
+      type: "textarea",
+      group: "cat",
+      hint: "For example: kittens or adults, how many at once, or anything you'd rather not take on.",
+      showIf: { field: "cat", values: [""] },
+    },
     ...homeFields,
     { name: "space", label: "Where would your foster cat stay?", type: "radio", options: ["A spare room", "A bathroom or laundry room", "Free roam of the home"], required: true },
     { name: "can_foster", label: "Which cats could you take?", type: "checkboxes", options: ["Kittens", "Bottle babies", "Moms with litters", "Adult cats", "Seniors", "Medical / special needs"], required: true },

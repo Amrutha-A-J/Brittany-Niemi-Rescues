@@ -17,7 +17,7 @@ async function submitDemoApplication(_prev: ApplyState, formData: FormData): Pro
   if (looksLikeSpam(formData)) return { ok: true };
   const { contact, answers, catSlug, fieldErrors } = parseApplication(type, formData);
   if (Object.keys(fieldErrors).length) return { error: "Please check the highlighted fields.", fieldErrors };
-  const cat = type === "adopt" && catSlug ? getDemoDB().cats.find((c) => c.slug === catSlug) : undefined;
+  const cat = catSlug ? getDemoDB().cats.find((c) => c.slug === catSlug) : undefined;
   createApplication({ type, cat_id: cat?.id ?? null, ...contact, answers });
   return { ok: true };
 }
