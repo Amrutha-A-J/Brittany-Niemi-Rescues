@@ -13,7 +13,8 @@ export type DemoDB = {
   adoptions: Adoption[];
 };
 
-const KEY = "bnr-demo-v1";
+// Bump when seed.json changes so visitors get the new sample data.
+const KEY = "bnr-demo-v2";
 const SESSION_KEY = "bnr-demo-session";
 
 const fresh = (): DemoDB =>

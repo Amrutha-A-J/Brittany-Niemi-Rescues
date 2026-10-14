@@ -82,6 +82,12 @@
           "path": "https://cdn2.thecatapi.com/images/d60.jpg",
           "alt": "",
           "position": 0
+        },
+        {
+          "id": "photo-bean-1",
+          "path": "https://cdn2.thecatapi.com/images/d65.jpg",
+          "alt": "",
+          "position": 1
         }
       ]
     },
@@ -116,6 +122,18 @@
           "path": "https://cdn2.thecatapi.com/images/5hmYjVhib.jpg",
           "alt": "",
           "position": 0
+        },
+        {
+          "id": "photo-juniper-1",
+          "path": "https://cdn2.thecatapi.com/images/2OKotXbFe.jpg",
+          "alt": "",
+          "position": 1
+        },
+        {
+          "id": "photo-juniper-2",
+          "path": "https://cdn2.thecatapi.com/images/MTUyODE2NA.jpg",
+          "alt": "",
+          "position": 2
         }
       ]
     },
@@ -157,6 +175,18 @@
           "path": "https://cdn2.thecatapi.com/images/9pn.jpg",
           "alt": "",
           "position": 1
+        },
+        {
+          "id": "photo-otis-2",
+          "path": "https://cdn2.thecatapi.com/images/a1o.jpg",
+          "alt": "",
+          "position": 2
+        },
+        {
+          "id": "photo-otis-3",
+          "path": "https://cdn2.thecatapi.com/images/d14.jpg",
+          "alt": "",
+          "position": 3
         }
       ]
     },
@@ -192,6 +222,12 @@
           "path": "https://cdn2.thecatapi.com/images/13MkvUreZ.jpg",
           "alt": "",
           "position": 0
+        },
+        {
+          "id": "photo-willow-1",
+          "path": "https://cdn2.thecatapi.com/images/MTQ5NzQ2MA.jpg",
+          "alt": "",
+          "position": 1
         }
       ]
     },
@@ -226,6 +262,18 @@
           "path": "https://cdn2.thecatapi.com/images/dno.jpg",
           "alt": "",
           "position": 0
+        },
+        {
+          "id": "photo-marmalade-1",
+          "path": "https://cdn2.thecatapi.com/images/a1a.jpg",
+          "alt": "",
+          "position": 1
+        },
+        {
+          "id": "photo-marmalade-2",
+          "path": "https://cdn2.thecatapi.com/images/5t3.jpg",
+          "alt": "",
+          "position": 2
         }
       ]
     },
@@ -260,6 +308,18 @@
           "path": "https://cdn2.thecatapi.com/images/b5v.jpg",
           "alt": "",
           "position": 0
+        },
+        {
+          "id": "photo-clover-1",
+          "path": "https://cdn2.thecatapi.com/images/a2e.jpg",
+          "alt": "",
+          "position": 1
+        },
+        {
+          "id": "photo-clover-2",
+          "path": "https://cdn2.thecatapi.com/images/bo9.jpg",
+          "alt": "",
+          "position": 2
         }
       ]
     },
@@ -294,6 +354,18 @@
           "path": "https://cdn2.thecatapi.com/images/bep.jpg",
           "alt": "",
           "position": 0
+        },
+        {
+          "id": "photo-gus-1",
+          "path": "https://cdn2.thecatapi.com/images/a2s.jpg",
+          "alt": "",
+          "position": 1
+        },
+        {
+          "id": "photo-gus-2",
+          "path": "https://cdn2.thecatapi.com/images/edj.jpg",
+          "alt": "",
+          "position": 2
         }
       ]
     },
@@ -328,6 +400,18 @@
           "path": "https://cdn2.thecatapi.com/images/SpioNJPsd.jpg",
           "alt": "",
           "position": 0
+        },
+        {
+          "id": "photo-pip-1",
+          "path": "https://cdn2.thecatapi.com/images/2l3.jpg",
+          "alt": "",
+          "position": 1
+        },
+        {
+          "id": "photo-pip-2",
+          "path": "https://cdn2.thecatapi.com/images/dut.jpg",
+          "alt": "",
+          "position": 2
         }
       ]
     },
@@ -362,6 +446,18 @@
           "path": "https://cdn2.thecatapi.com/images/buq.jpg",
           "alt": "",
           "position": 0
+        },
+        {
+          "id": "photo-rosie-1",
+          "path": "https://cdn2.thecatapi.com/images/dbh.jpg",
+          "alt": "",
+          "position": 1
+        },
+        {
+          "id": "photo-rosie-2",
+          "path": "https://cdn2.thecatapi.com/images/2gm.jpg",
+          "alt": "",
+          "position": 2
         }
       ]
     },
