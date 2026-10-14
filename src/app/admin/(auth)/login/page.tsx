@@ -9,8 +9,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 export const metadata = { title: "Log in" };
 
 export default async function LoginPage({ searchParams }: PageProps<"/admin/login">) {
+  if (isDemo) return <DemoLogin />;
   const { next, error } = await searchParams;
-  if (isDemo) return <DemoLogin next={typeof next === "string" ? next : undefined} />;
 
   if (!isSupabaseConfigured) {
     return (

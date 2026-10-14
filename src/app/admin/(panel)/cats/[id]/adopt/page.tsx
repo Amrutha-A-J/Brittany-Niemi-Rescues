@@ -8,10 +8,15 @@ import { requireStaff } from "@/lib/admin/session";
 
 export const metadata = { title: "Mark as adopted" };
 
+/** The static demo has one page per screen; the record id comes from `?id=`. */
+export async function generateStaticParams() {
+  return isDemo ? [{ id: "_" }] : [];
+}
+
 export default async function AdoptCatPage({ params, searchParams }: PageProps<"/admin/cats/[id]/adopt">) {
   const { id } = await params;
+  if (isDemo) return <DemoAdoptCat id={id} />;
   const { application } = await searchParams;
-  if (isDemo) return <DemoAdoptCat id={id} application={typeof application === "string" ? application : undefined} />;
   const { supabase } = await requireStaff();
   const { data: cat } = await supabase.from("cats").select("id, name, status, adoption_fee").eq("id", id).maybeSingle();
   if (!cat) notFound();

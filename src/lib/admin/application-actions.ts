@@ -103,9 +103,9 @@ export async function reopenApplication(fd: FormData) {
 
 export async function deleteApplication(fd: FormData) {
   const supabase = await staffClient();
-  await supabase.from("applications").delete().eq("id", text(fd, "id"));
+  const { data } = await supabase.from("applications").delete().eq("id", text(fd, "id")).select("type").single();
   refresh();
-  redirect("/admin/applications");
+  redirect(data?.type === "foster" ? "/admin/applications/foster" : "/admin/applications/adopt");
 }
 
 export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<FormState> {

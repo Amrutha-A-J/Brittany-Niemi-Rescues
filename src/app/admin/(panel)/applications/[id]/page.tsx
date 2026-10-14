@@ -10,11 +10,17 @@ import { deleteApplication, reopenApplication, saveNotes } from "@/lib/admin/app
 import { MEETING_SELECT, type MeetingRow } from "@/lib/admin/meetings";
 import { requireStaff } from "@/lib/admin/session";
 import { formatDate, toLocalInputValue } from "@/lib/calendar";
+import { applicationListMeta } from "@/lib/admin/application-tabs";
 import { applicationFields, applicationTypeLabel } from "@/lib/forms";
 import type { Application } from "@/lib/types";
 import { nowMs } from "@/lib/time";
 
 export const metadata = { title: "Application" };
+
+/** The static demo has one page per screen; the record id comes from `?id=`. */
+export async function generateStaticParams() {
+  return isDemo ? [{ id: "_" }] : [];
+}
 
 export default async function ApplicationPage({ params }: PageProps<"/admin/applications/[id]">) {
   const { id } = await params;
@@ -35,7 +41,7 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
     <>
       <PageHeader
         title={app.name}
-        back={{ href: "/admin/applications", label: "Applications" }}
+        back={{ href: applicationListMeta[app.type].href, label: applicationListMeta[app.type].title }}
         description={
           <>
             {applicationTypeLabel[app.type]} application · received {formatDate(app.created_at)}

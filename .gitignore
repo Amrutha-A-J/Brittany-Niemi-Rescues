@@ -43,3 +43,5 @@ next-env.d.ts
 
 /.next-build/
 /.next-demo/
+/.next-pages/
+/.pages-stash/

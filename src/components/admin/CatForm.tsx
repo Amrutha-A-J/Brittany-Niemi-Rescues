@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { saveCat, type CatInput } from "@/lib/admin/cat-actions";
 import { ageInMonths, formatAge, photoUrl } from "@/lib/cats";
 import { createClient } from "@/lib/supabase/browser";
 import type { Cat, YesNoUnknown } from "@/lib/types";
+import { links } from "@/lib/links";
 
 type Photo = { path: string; alt: string; url: string; uploading?: boolean };
 
@@ -333,7 +335,7 @@ export function CatForm({ cat, onSave = saveCat, upload = uploadToSupabase, maxE
           <h2 className="text-sm font-semibold">Listing</h2>
           {cat?.status === "adopted" ? (
             <p className="rounded-xl bg-card p-3 text-sm">
-              This cat is adopted. Manage that from the <a href={`/admin/adopted/${cat.id}`} className="underline">Adopted</a> section.
+              This cat is adopted. Manage that from the <Link href={links.adopted(cat.id)} className="underline">Adopted</Link> section.
             </p>
           ) : (
             <label className="block">

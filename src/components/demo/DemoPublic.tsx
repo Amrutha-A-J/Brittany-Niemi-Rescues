@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import type { ApplyState } from "@/lib/application-actions";
 import { looksLikeSpam, parseApplication } from "@/lib/application-validate";
 import { toCatView } from "@/lib/cats";
@@ -20,7 +22,16 @@ async function submitDemoApplication(_prev: ApplyState, formData: FormData): Pro
   return { ok: true };
 }
 
-export function DemoApplicationForm({ type, defaultCat }: { type: ApplicationType; defaultCat?: string }) {
+export function DemoApplicationForm({ type }: { type: ApplicationType }) {
+  return (
+    <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-card" />}>
+      <DemoApplicationFormInner type={type} />
+    </Suspense>
+  );
+}
+
+function DemoApplicationFormInner({ type }: { type: ApplicationType }) {
+  const defaultCat = useSearchParams().get("cat") ?? "";
   const db = useDemoDB();
   if (!db) return <div className="h-96 animate-pulse rounded-2xl bg-card" />;
   const cats = db.cats

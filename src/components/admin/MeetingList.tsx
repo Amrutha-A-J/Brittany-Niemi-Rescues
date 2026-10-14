@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { meetingGoogleUrl, type MeetingRow } from "@/lib/admin/meetings";
 import { formatDateTime } from "@/lib/calendar";
+import { links } from "@/lib/links";
 
 type Props = {
   meetings: MeetingRow[];
@@ -30,7 +31,7 @@ export function MeetingList({ meetings, showApplicant = true, setStatus, icsHref
               </p>
               {showApplicant && m.applications && (
                 <p className="text-sm">
-                  <Link href={`/admin/applications/${m.applications.id}`} className="underline underline-offset-2">
+                  <Link href={links.application(m.applications.id)} className="underline underline-offset-2">
                     {m.applications.name}
                   </Link>
                   {m.applications.cats && <span className="text-muted"> for {m.applications.cats.name}</span>}

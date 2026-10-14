@@ -18,8 +18,8 @@ type Row = {
 };
 
 export default async function AdoptedPage({ searchParams }: PageProps<"/admin/adopted">) {
+  if (isDemo) return <DemoAdopted />;
   const { q } = await searchParams;
-  if (isDemo) return <DemoAdopted q={typeof q === "string" ? q : undefined} />;
   const search = typeof q === "string" ? q.trim().toLowerCase() : "";
   const { supabase } = await requireStaff();
   const { data } = await supabase

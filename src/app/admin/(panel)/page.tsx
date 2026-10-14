@@ -23,7 +23,7 @@ export default async function OverviewPage() {
       .select("id, name, type, created_at, cats(name)")
       .eq("status", "new")
       .order("created_at", { ascending: false })
-      .limit(6),
+      .limit(50),
     supabase
       .from("meetings")
       .select(MEETING_SELECT)
@@ -38,7 +38,16 @@ export default async function OverviewPage() {
   const stats = [
     { label: "Available cats", value: count("available"), href: "/admin/cats" },
     { label: "Adoption pending", value: count("pending"), href: "/admin/cats" },
-    { label: "New applications", value: apps.data?.length ?? 0, href: "/admin/applications" },
+    {
+      label: "New adoption applications",
+      value: (apps.data ?? []).filter((a) => a.type === "adopt").length,
+      href: "/admin/applications/adopt",
+    },
+    {
+      label: "New foster applications",
+      value: (apps.data ?? []).filter((a) => a.type === "foster").length,
+      href: "/admin/applications/foster",
+    },
     { label: "Upcoming meet & greets", value: meetings.data?.length ?? 0, href: "/admin/meetings" },
   ];
 
@@ -53,7 +62,7 @@ export default async function OverviewPage() {
           </Link>
         }
       />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
         {stats.map((s) => (
           <Link key={s.label} href={s.href} className="rounded-2xl border border-line bg-white p-5 hover:border-ink">
             <p className="font-serif text-4xl leading-none">{s.value}</p>
@@ -65,7 +74,7 @@ export default async function OverviewPage() {
         <Card title="New applications">
           {apps.data?.length ? (
             <ul className="divide-y divide-line">
-              {apps.data.map((a) => {
+              {apps.data.slice(0, 6).map((a) => {
                 const cat = (Array.isArray(a.cats) ? a.cats[0] : a.cats) as { name: string } | null;
                 return (
                   <li key={a.id}>

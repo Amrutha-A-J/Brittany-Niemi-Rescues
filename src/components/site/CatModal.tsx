@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import type { CatView } from "@/lib/types";
 import { CatDetails } from "./CatDetails";
 import { PhotoCarousel } from "./PhotoCarousel";
+import { links } from "@/lib/links";
 
 export function CatModal({ cat, onClose }: { cat: CatView; onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -72,7 +73,7 @@ export function CatModal({ cat, onClose }: { cat: CatView; onClose: () => void }
           <div className="md:pt-6">
             <CatDetails cat={cat} />
             <Link
-              href={`/cats/${cat.slug}`}
+              href={links.publicCat(cat.slug)}
               className="mt-6 inline-block text-xs text-muted underline underline-offset-4 hover:text-ink"
             >
               Open {cat.name}&apos;s page to share

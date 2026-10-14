@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { DemoApplicationForm } from "@/components/demo/DemoPublic";
 import { ApplicationForm } from "@/components/site/ApplicationForm";
-import { isDemo } from "@/lib/demo/config";
 import { getAdoptableCats } from "@/lib/data";
+import { isDemo } from "@/lib/demo/config";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -11,12 +11,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/apply" },
 };
 
-export default async function ApplyPage({ searchParams }: PageProps<"/apply">) {
-  const { cat } = await searchParams;
-  const cats = await getAdoptableCats();
-  const options = cats.map((c) => ({ slug: c.slug, name: c.name, status: c.status })).sort((a, b) => a.name.localeCompare(b.name));
-  const defaultCat = typeof cat === "string" && options.some((c) => c.slug === cat) ? cat : "";
-
+export default function ApplyPage({ searchParams }: PageProps<"/apply">) {
   return (
     <section className="container-page max-w-[760px] pb-24 pt-14">
       <p className="eyebrow">Adopting</p>
@@ -24,11 +19,15 @@ export default async function ApplyPage({ searchParams }: PageProps<"/apply">) {
       <p className="mb-10 text-[15px] leading-relaxed text-muted">
         It takes about 5 minutes. There are no wrong answers. It just helps us match the right cat with the right home.
       </p>
-      {isDemo ? (
-        <DemoApplicationForm type="adopt" defaultCat={typeof cat === "string" ? cat : ""} />
-      ) : (
-        <ApplicationForm type="adopt" cats={options} defaultCat={defaultCat} />
-      )}
+      {isDemo ? <DemoApplicationForm type="adopt" /> : <LiveApplicationForm searchParams={searchParams} />}
     </section>
   );
+}
+
+async function LiveApplicationForm({ searchParams }: { searchParams: PageProps<"/apply">["searchParams"] }) {
+  const { cat } = await searchParams;
+  const cats = await getAdoptableCats();
+  const options = cats.map((c) => ({ slug: c.slug, name: c.name, status: c.status })).sort((a, b) => a.name.localeCompare(b.name));
+  const defaultCat = typeof cat === "string" && options.some((c) => c.slug === cat) ? cat : "";
+  return <ApplicationForm type="adopt" cats={options} defaultCat={defaultCat} />;
 }

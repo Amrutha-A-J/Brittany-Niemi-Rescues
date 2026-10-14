@@ -62,7 +62,7 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
         html: emailLayout(
           `<p>You have a new ${applicationTypeLabel[type].toLowerCase()} application ${escapeHtml(about)}.</p>
 <p><strong>${escapeHtml(contact.name)}</strong><br>${escapeHtml(contact.email)}<br>${escapeHtml(contact.phone)}<br>${escapeHtml(contact.city)}</p>
-<p>${button(`${site.url}/admin/applications`, "Review it")}</p>`,
+<p>${button(`${site.url}/admin/applications/${type}`, "Review it")}</p>`,
         ),
       }),
     sendEmail({

@@ -24,7 +24,11 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     );
   }
 
-  const { count } = await supabase.from("applications").select("id", { count: "exact", head: true }).eq("status", "new");
+  const { data: fresh } = await supabase.from("applications").select("type").eq("status", "new");
+  const newCounts = {
+    adopt: (fresh ?? []).filter((a) => a.type === "adopt").length,
+    foster: (fresh ?? []).filter((a) => a.type === "foster").length,
+  };
 
   return (
     <div className="mx-auto flex max-w-[1240px] flex-col md:flex-row">
@@ -38,7 +42,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           </form>
         </div>
         <nav aria-label="Admin">
-          <AdminNav newCount={count ?? 0} />
+          <AdminNav newCounts={newCounts} />
         </nav>
         <div className="mt-8 hidden space-y-2 border-t border-line pt-6 text-sm md:block">
           <Link href="/" target="_blank" className="block text-muted hover:text-ink">

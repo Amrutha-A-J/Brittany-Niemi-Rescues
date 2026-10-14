@@ -12,8 +12,8 @@ import { ConfirmSubmit } from "@/components/admin/Forms";
 export const metadata = { title: "Cats" };
 
 export default async function AdminCatsPage({ searchParams }: PageProps<"/admin/cats">) {
+  if (isDemo) return <DemoCats />;
   const { saved } = await searchParams;
-  if (isDemo) return <DemoCats saved={typeof saved === "string" ? saved : undefined} />;
   const { supabase } = await requireStaff();
   const { data } = await supabase
     .from("cats")

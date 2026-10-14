@@ -10,6 +10,11 @@ import type { Cat } from "@/lib/types";
 
 export const metadata = { title: "Edit cat" };
 
+/** The static demo has one page per screen; the record id comes from `?id=`. */
+export async function generateStaticParams() {
+  return isDemo ? [{ id: "_" }] : [];
+}
+
 export default async function EditCatPage({ params }: PageProps<"/admin/cats/[id]">) {
   const { id } = await params;
   if (isDemo) return <DemoCatEditor id={id} />;

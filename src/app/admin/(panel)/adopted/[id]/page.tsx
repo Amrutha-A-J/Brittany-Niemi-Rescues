@@ -14,6 +14,11 @@ import type { Adoption, Cat } from "@/lib/types";
 
 export const metadata = { title: "Adoption record" };
 
+/** The static demo has one page per screen; the record id comes from `?id=`. */
+export async function generateStaticParams() {
+  return isDemo ? [{ id: "_" }] : [];
+}
+
 export default async function AdoptedCatPage({ params }: PageProps<"/admin/adopted/[id]">) {
   const { id } = await params;
   if (isDemo) return <DemoAdoptedCat id={id} />;

@@ -1,7 +1,9 @@
 import Image from "next/image";
+import Link from "next/link";
 import { catSummary, categoryLabel } from "@/lib/cats";
 import type { CatView } from "@/lib/types";
 import { CatIllustration } from "./CatIllustration";
+import { links } from "@/lib/links";
 
 export function CatTag({ cat }: { cat: CatView }) {
   if (cat.status === "pending") return <span className="tag bg-ink text-white">Pending</span>;
@@ -20,8 +22,8 @@ export function CatCard({
 }) {
   const cover = cat.photos[0];
   return (
-    <a
-      href={`/cats/${cat.slug}`}
+    <Link
+      href={links.publicCat(cat.slug)}
       className="group block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
       onClick={(e) => {
         if (!onOpen || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
@@ -50,6 +52,6 @@ export function CatCard({
       </div>
       <h3 className="mt-3 font-serif text-[22px] leading-tight">{cat.name}</h3>
       <p className="mt-1 text-xs text-muted">{catSummary(cat)}</p>
-    </a>
+    </Link>
   );
 }

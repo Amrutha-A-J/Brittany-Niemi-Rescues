@@ -5,8 +5,8 @@
  * write the browser-only demo store instead of Supabase.
  */
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState, useSyncExternalStore } from "react";
 import type { FormState } from "@/lib/admin/auth-actions";
 import type { CatInput } from "@/lib/admin/cat-actions";
 import type { MeetingRow } from "@/lib/admin/meetings";
@@ -30,7 +30,8 @@ import {
 } from "@/lib/demo/store";
 import { applicationFields, applicationTypeLabel } from "@/lib/forms";
 import { meetingEvent } from "@/lib/admin/meetings";
-import type { Adoption, Application, ApplicationStatus } from "@/lib/types";
+import type { Adoption, Application, ApplicationType } from "@/lib/types";
+import { APPLICATION_TABS, applicationListMeta } from "@/lib/admin/application-tabs";
 import { AdminNav } from "../admin/AdminNav";
 import { AdoptionForm, type ApplicantOption } from "../admin/AdoptionForm";
 import { ApplicationActions } from "../admin/ApplicationActions";
@@ -40,6 +41,7 @@ import { ActionForm, SubmitButton } from "../admin/Forms";
 import { MeetingList } from "../admin/MeetingList";
 import { ApplicationStatusBadge, Card, CatStatusBadge, Empty, PageHeader, Thumb } from "../admin/ui";
 import { Logo } from "../site/Logo";
+import { links } from "@/lib/links";
 
 const EMAIL_NOTE = " (Demo: no email is sent.)";
 
@@ -47,6 +49,29 @@ const EMAIL_NOTE = " (Demo: no email is sent.)";
 
 function Loading() {
   return <div className="h-64 animate-pulse rounded-2xl bg-card" />;
+}
+
+/** Reads a query-string value. */
+function useQuery(name: string) {
+  return useSearchParams().get(name) ?? undefined;
+}
+
+/** On the static demo, record pages live at `/…/_?id=<id>`. */
+function useRecordId(id?: string) {
+  const fromQuery = useQuery("id");
+  return id === "_" || !id ? fromQuery : id;
+}
+
+/** Wraps a screen that reads the query string, as static pages require. */
+function suspended<P extends object>(Inner: (props: P) => React.ReactNode) {
+  function Suspended(props: P) {
+    return (
+      <Suspense fallback={<Loading />}>
+        <Inner {...props} />
+      </Suspense>
+    );
+  }
+  return Suspended;
 }
 
 function useNow() {
@@ -121,8 +146,9 @@ function useLoggedIn() {
   return useSyncExternalStore(noop, demoLogin.isLoggedIn, () => null);
 }
 
-export function DemoLogin({ next }: { next?: string }) {
+export const DemoLogin = suspended(function DemoLogin() {
   const router = useRouter();
+  const next = useQuery("next");
   const [error, setError] = useState("");
   return (
     <AuthCard title="Rescue login">
@@ -161,7 +187,7 @@ export function DemoLogin({ next }: { next?: string }) {
       </Link>
     </AuthCard>
   );
-}
+});
 
 export function DemoForgotPassword() {
   return (
@@ -187,7 +213,8 @@ export function DemoPanel({ children }: { children: React.ReactNode }) {
   }, [loggedIn, router]);
 
   if (!loggedIn || !db) return <div className="p-10"><Loading /></div>;
-  const newCount = db.applications.filter((a) => a.status === "new").length;
+  const isNew = (type: string) => db.applications.filter((a) => a.status === "new" && a.type === type).length;
+  const newCounts = { adopt: isNew("adopt"), foster: isNew("foster") };
 
   const logout = () => {
     demoLogin.logout();
@@ -212,7 +239,7 @@ export function DemoPanel({ children }: { children: React.ReactNode }) {
           </button>
         </div>
         <nav aria-label="Admin">
-          <AdminNav newCount={newCount} />
+          <AdminNav newCounts={newCounts} />
         </nav>
         <div className="mt-8 hidden space-y-2 border-t border-line pt-6 text-sm md:block">
           <Link href="/" target="_blank" className="block text-muted hover:text-ink">
@@ -247,7 +274,8 @@ export function DemoOverview() {
   const stats = [
     { label: "Available cats", value: count("available"), href: "/admin/cats" },
     { label: "Adoption pending", value: count("pending"), href: "/admin/cats" },
-    { label: "New applications", value: newApps.length, href: "/admin/applications" },
+    { label: "New adoption applications", value: newApps.filter((a) => a.type === "adopt").length, href: "/admin/applications/adopt" },
+    { label: "New foster applications", value: newApps.filter((a) => a.type === "foster").length, href: "/admin/applications/foster" },
     { label: "Upcoming meet & greets", value: upcoming.length, href: "/admin/meetings" },
   ];
 
@@ -262,7 +290,7 @@ export function DemoOverview() {
           </Link>
         }
       />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
         {stats.map((s) => (
           <Link key={s.label} href={s.href} className="rounded-2xl border border-line bg-white p-5 hover:border-ink">
             <p className="font-serif text-4xl leading-none">{s.value}</p>
@@ -278,7 +306,7 @@ export function DemoOverview() {
                 const cat = db.cats.find((c) => c.id === a.cat_id);
                 return (
                   <li key={a.id}>
-                    <Link href={`/admin/applications/${a.id}`} className="flex items-center justify-between gap-3 py-3 hover:underline">
+                    <Link href={links.application(a.id)} className="flex items-center justify-between gap-3 py-3 hover:underline">
                       <span>
                         <span className="font-medium">{a.name}</span>
                         <span className="text-sm text-muted">
@@ -309,7 +337,7 @@ export function DemoOverview() {
             <ul className="divide-y divide-line">
               {followUps.map((f) => (
                 <li key={f.cat_id}>
-                  <Link href={`/admin/adopted/${f.cat_id}`} className="flex justify-between gap-3 py-3 hover:underline">
+                  <Link href={links.adopted(f.cat_id)} className="flex justify-between gap-3 py-3 hover:underline">
                     <span>
                       {db.cats.find((c) => c.id === f.cat_id)?.name} <span className="text-muted">with {f.adopter_name}</span>
                     </span>
@@ -327,7 +355,8 @@ export function DemoOverview() {
 
 /* --------------------------------------------------------------------- cats */
 
-export function DemoCats({ saved }: { saved?: string }) {
+export const DemoCats = suspended(function DemoCats() {
+  const saved = useQuery("saved");
   const db = useDemoDB();
   if (!db) return <Loading />;
   const cats = db.cats.filter((c) => c.status !== "adopted").map((c) => toCatView(c));
@@ -357,7 +386,7 @@ export function DemoCats({ saved }: { saved?: string }) {
               <Thumb url={c.photos[0]?.url} size={56} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <Link href={`/admin/cats/${c.id}`} className="font-serif text-xl hover:underline">
+                  <Link href={links.cat(c.id)} className="font-serif text-xl hover:underline">
                     {c.name}
                   </Link>
                   <CatStatusBadge status={c.status} />
@@ -373,10 +402,10 @@ export function DemoCats({ saved }: { saved?: string }) {
                 >
                   {c.status === "pending" ? "Mark available" : "Mark pending"}
                 </button>
-                <Link href={`/admin/cats/${c.id}/adopt`} className="btn-ghost px-3 py-1.5 text-xs">
+                <Link href={links.adoptCat(c.id)} className="btn-ghost px-3 py-1.5 text-xs">
                   Mark adopted
                 </Link>
-                <Link href={`/admin/cats/${c.id}`} className="btn-outline px-3 py-1.5 text-xs">
+                <Link href={links.cat(c.id)} className="btn-outline px-3 py-1.5 text-xs">
                   Edit
                 </Link>
                 <button
@@ -392,7 +421,7 @@ export function DemoCats({ saved }: { saved?: string }) {
       )}
     </>
   );
-}
+});
 
 async function saveDemoCat(input: CatInput) {
   try {
@@ -410,7 +439,10 @@ async function saveDemoCat(input: CatInput) {
 
 const storeAsDataUrl = (blob: Blob) => blobToDataUrl(blob);
 
-export function DemoCatEditor({ id }: { id?: string }) {
+export const DemoCatEditor = suspended(function DemoCatEditor({ id: routeId }: { id?: string }) {
+  const isNew = routeId === undefined;
+  const queryId = useRecordId(routeId);
+  const id = isNew ? undefined : queryId;
   const db = useDemoDB();
   if (!db) return <Loading />;
   const cat = id ? db.cats.find((c) => c.id === id) : undefined;
@@ -422,17 +454,17 @@ export function DemoCatEditor({ id }: { id?: string }) {
         title={cat ? `Edit ${cat.name}` : "Add a cat"}
         back={
           cat?.status === "adopted"
-            ? { href: `/admin/adopted/${cat.id}`, label: "Adoption record" }
+            ? { href: links.adopted(cat.id), label: "Adoption record" }
             : { href: "/admin/cats", label: "Cats" }
         }
         actions={
           cat && (
             <>
-              <Link href={`/cats/${cat.slug}`} target="_blank" className="btn-ghost">
+              <Link href={links.publicCat(cat.slug)} target="_blank" className="btn-ghost">
                 View on site ↗
               </Link>
               {cat.status !== "adopted" && (
-                <Link href={`/admin/cats/${cat.id}/adopt`} className="btn-outline">
+                <Link href={links.adoptCat(cat.id)} className="btn-outline">
                   Mark as adopted
                 </Link>
               )}
@@ -443,9 +475,11 @@ export function DemoCatEditor({ id }: { id?: string }) {
       <CatForm key={cat?.id ?? "new"} cat={cat} onSave={saveDemoCat} upload={storeAsDataUrl} maxEdge={1000} />
     </>
   );
-}
+});
 
-export function DemoAdoptCat({ id, application }: { id: string; application?: string }) {
+export const DemoAdoptCat = suspended(function DemoAdoptCat({ id: routeId }: { id: string }) {
+  const id = useRecordId(routeId) ?? "";
+  const application = useQuery("application");
   const router = useRouter();
   const db = useDemoDB();
   if (!db) return <Loading />;
@@ -454,7 +488,7 @@ export function DemoAdoptCat({ id, application }: { id: string; application?: st
   if (cat.status === "adopted") {
     return (
       <Empty>
-        {cat.name} is already adopted. <Link href={`/admin/adopted/${cat.id}`} className="underline">See the record</Link>
+        {cat.name} is already adopted. <Link href={links.adopted(cat.id)} className="underline">See the record</Link>
       </Empty>
     );
   }
@@ -463,7 +497,7 @@ export function DemoAdoptCat({ id, application }: { id: string; application?: st
       <PageHeader
         title={`${cat.name} is going home!`}
         description="This removes them from the website and keeps a record in the Adopted section."
-        back={{ href: `/admin/cats/${cat.id}`, label: cat.name }}
+        back={{ href: links.cat(cat.id), label: cat.name }}
       />
       <div className="max-w-[760px]">
         <AdoptionForm
@@ -473,92 +507,88 @@ export function DemoAdoptCat({ id, application }: { id: string; application?: st
           defaultApplication={application}
           defaultFee={cat.adoption_fee}
           isNew
-          action={adoptionAction(cat.id, () => router.push(`/admin/adopted/${cat.id}`))}
+          action={adoptionAction(cat.id, () => router.push(links.adopted(cat.id)))}
         />
       </div>
     </>
   );
-}
+});
 
 /* ------------------------------------------------------------- applications */
 
-const TABS: { value: ApplicationStatus | "all"; label: string }[] = [
-  { value: "new", label: "New" },
-  { value: "meet_scheduled", label: "Meet & greets" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
-  { value: "all", label: "All" },
-];
-
-export function DemoApplications({ status: rawStatus, type: rawType, cat: catId = "" }: { status?: string; type?: string; cat?: string }) {
+export const DemoApplications = suspended(function DemoApplications({ type }: { type: ApplicationType }) {
+  const router = useRouter();
+  const rawStatus = useQuery("status");
+  const catQuery = useQuery("cat") ?? "";
+  const catId = type === "adopt" ? catQuery : "";
+  const meta = applicationListMeta[type];
   const db = useDemoDB();
   if (!db) return <Loading />;
-  const status = TABS.some((t) => t.value === rawStatus) ? rawStatus! : "new";
-  const type = rawType === "adopt" || rawType === "foster" ? rawType : "";
-  const rows = db.applications
-    .filter((a) => (status === "all" || a.status === status) && (!type || a.type === type) && (!catId || a.cat_id === catId))
+  const status = APPLICATION_TABS.some((t) => t.value === rawStatus) ? rawStatus! : "new";
+  const ofType = db.applications.filter((a) => a.type === type);
+  const rows = ofType
+    .filter((a) => (status === "all" || a.status === status) && (!catId || a.cat_id === catId))
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
-  const countBy = (s: string) => db.applications.filter((a) => s === "all" || a.status === s).length;
+  const countBy = (s: string) => ofType.filter((a) => s === "all" || a.status === s).length;
   const href = (patch: Record<string, string>) => {
-    const p = new URLSearchParams({ status, type, cat: catId, ...patch });
+    const p = new URLSearchParams({ status, cat: catId, ...patch });
     for (const [k, v] of [...p]) if (!v) p.delete(k);
-    return `/admin/applications?${p}`;
+    return `${meta.href}?${p}`;
   };
 
   return (
     <>
-      <PageHeader title="Applications" description="Adoption and foster applications from the website." />
+      <PageHeader title={meta.title} description={meta.description} />
       <nav className="mb-4 flex gap-2 overflow-x-auto pb-1" aria-label="Application status">
-        {TABS.map((t) => (
+        {APPLICATION_TABS.map((t) => (
           <Link key={t.value} href={href({ status: t.value })} className="pill" aria-current={status === t.value ? "page" : undefined}>
             {t.label} <span className="opacity-60">{countBy(t.value)}</span>
           </Link>
         ))}
       </nav>
-      <form className="mb-6 flex flex-wrap items-end gap-3" action="/admin/applications">
-        <input type="hidden" name="status" value={status} />
-        <label>
-          <span className="field-label">Type</span>
-          <select name="type" defaultValue={type} className="field py-2">
-            <option value="">Adoption &amp; foster</option>
-            <option value="adopt">Adoption only</option>
-            <option value="foster">Foster only</option>
-          </select>
-        </label>
-        <label>
-          <span className="field-label">Cat</span>
-          <select name="cat" defaultValue={catId} className="field py-2">
-            <option value="">Any cat</option>
-            {[...db.cats]
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-          </select>
-        </label>
-        <button className="btn-outline py-2">Filter</button>
-        {(type || catId) && (
-          <Link href={href({ type: "", cat: "" })} className="py-2 text-sm text-muted underline">
-            Clear
-          </Link>
-        )}
-      </form>
+      {type === "adopt" && (
+        <form
+          className="mb-6 flex flex-wrap items-end gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            router.push(href({ cat: String(new FormData(e.currentTarget).get("cat") ?? "") }));
+          }}
+        >
+          <label>
+            <span className="field-label">Cat</span>
+            <select name="cat" defaultValue={catId} className="field py-2">
+              <option value="">Any cat</option>
+              {[...db.cats]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <button className="btn-outline py-2">Filter</button>
+          {catId && (
+            <Link href={href({ cat: "" })} className="py-2 text-sm text-muted underline">
+              Clear
+            </Link>
+          )}
+        </form>
+      )}
       {rows.length === 0 ? (
-        <Empty>No applications here.</Empty>
+        <Empty>No {type === "adopt" ? "adoption" : "foster"} applications here.</Empty>
       ) : (
         <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
           {rows.map((a) => {
             const cat = db.cats.find((c) => c.id === a.cat_id);
             return (
               <li key={a.id}>
-                <Link href={`/admin/applications/${a.id}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3.5 hover:bg-card/60 sm:px-5">
+                <Link href={links.application(a.id)} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3.5 hover:bg-card/60 sm:px-5">
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">{a.name}</span>
                     <span className="block truncate text-xs text-muted">
-                      {applicationTypeLabel[a.type]}
-                      {a.type === "adopt" && ` · ${cat?.name ?? "No specific cat"}`} · {a.city || "—"}
+                      {type === "adopt" ? `${cat?.name ?? "No specific cat"} · ` : ""}
+                      {a.city || "—"}
                     </span>
                   </span>
                   <span className="text-xs text-muted">{formatDate(a.created_at)}</span>
@@ -571,7 +601,7 @@ export function DemoApplications({ status: rawStatus, type: rawType, cat: catId 
       )}
     </>
   );
-}
+});
 
 function decisionActions(app: Application, db: DemoDB) {
   const text = (fd: FormData, n: string) => String(fd.get(n) ?? "").trim();
@@ -601,7 +631,8 @@ function decisionActions(app: Application, db: DemoDB) {
   };
 }
 
-export function DemoApplication({ id }: { id: string }) {
+export const DemoApplication = suspended(function DemoApplication({ id: routeId }: { id: string }) {
+  const id = useRecordId(routeId);
   const router = useRouter();
   const db = useDemoDB();
   const now = useNow();
@@ -618,7 +649,7 @@ export function DemoApplication({ id }: { id: string }) {
     <>
       <PageHeader
         title={app.name}
-        back={{ href: "/admin/applications", label: "Applications" }}
+        back={{ href: applicationListMeta[app.type].href, label: applicationListMeta[app.type].title }}
         description={`${applicationTypeLabel[app.type]} application · received ${formatDate(app.created_at)}`}
         actions={<ApplicationStatusBadge status={app.status} />}
       />
@@ -643,7 +674,7 @@ export function DemoApplication({ id }: { id: string }) {
               </button>
             )}
             {app.status === "approved" && cat && cat.status !== "adopted" && (
-              <Link href={`/admin/cats/${cat.id}/adopt?application=${app.id}`} className="btn-primary mt-4">
+              <Link href={links.adoptCat(cat.id, app.id)} className="btn-primary mt-4">
                 Finalise adoption of {cat.name} →
               </Link>
             )}
@@ -697,7 +728,7 @@ export function DemoApplication({ id }: { id: string }) {
                   <dt className="text-xs text-muted">Cat</dt>
                   <dd>
                     {cat ? (
-                      <Link href={`/admin/cats/${cat.id}`} className="underline underline-offset-2">
+                      <Link href={links.cat(cat.id)} className="underline underline-offset-2">
                         {cat.name}
                       </Link>
                     ) : (
@@ -724,7 +755,7 @@ export function DemoApplication({ id }: { id: string }) {
             onClick={() => {
               if (window.confirm("Delete this application permanently?")) {
                 deleteApplication(app.id);
-                router.push("/admin/applications");
+                router.push(applicationListMeta[app.type].href);
               }
             }}
           >
@@ -734,7 +765,7 @@ export function DemoApplication({ id }: { id: string }) {
       </div>
     </>
   );
-}
+});
 
 /* ----------------------------------------------------------------- meetings */
 
@@ -779,7 +810,9 @@ export function DemoMeetings() {
 
 /* ------------------------------------------------------------------ adopted */
 
-export function DemoAdopted({ q }: { q?: string }) {
+export const DemoAdopted = suspended(function DemoAdopted() {
+  const router = useRouter();
+  const q = useQuery("q");
   const db = useDemoDB();
   const now = useNow();
   if (!db) return <Loading />;
@@ -800,7 +833,14 @@ export function DemoAdopted({ q }: { q?: string }) {
   return (
     <>
       <PageHeader title="Adopted" description="Every cat that has found a home, with who adopted them." />
-      <form className="mb-6 flex max-w-md gap-2" action="/admin/adopted">
+      <form
+        className="mb-6 flex max-w-md gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const value = String(new FormData(e.currentTarget).get("q") ?? "").trim();
+          router.push(value ? `/admin/adopted?q=${encodeURIComponent(value)}` : "/admin/adopted");
+        }}
+      >
         <input type="search" name="q" defaultValue={search} placeholder="Search cat or adopter" className="field" aria-label="Search" />
         <button className="btn-outline">Search</button>
       </form>
@@ -813,7 +853,7 @@ export function DemoAdopted({ q }: { q?: string }) {
             const followUpDue = adoption?.follow_up_on && adoption.follow_up_on <= today;
             return (
               <li key={cat.id}>
-                <Link href={`/admin/adopted/${cat.id}`} className="flex gap-4 rounded-2xl border border-line bg-white p-4 hover:border-ink">
+                <Link href={links.adopted(cat.id)} className="flex gap-4 rounded-2xl border border-line bg-white p-4 hover:border-ink">
                   <Thumb url={cover ? photoUrl(cover.path) : undefined} size={72} />
                   <div className="min-w-0">
                     <p className="font-serif text-xl leading-tight">{cat.name}</p>
@@ -829,9 +869,10 @@ export function DemoAdopted({ q }: { q?: string }) {
       )}
     </>
   );
-}
+});
 
-export function DemoAdoptedCat({ id }: { id: string }) {
+export const DemoAdoptedCat = suspended(function DemoAdoptedCat({ id: routeId }: { id: string }) {
+  const id = useRecordId(routeId) ?? "";
   const router = useRouter();
   const db = useDemoDB();
   if (!db) return <Loading />;
@@ -847,7 +888,7 @@ export function DemoAdoptedCat({ id }: { id: string }) {
         description={catSummary(cat)}
         back={{ href: "/admin/adopted", label: "Adopted" }}
         actions={
-          <Link href={`/admin/cats/${cat.id}`} className="btn-outline">
+          <Link href={links.cat(cat.id)} className="btn-outline">
             Edit cat details
           </Link>
         }
@@ -896,7 +937,7 @@ export function DemoAdoptedCat({ id }: { id: string }) {
             {cat.description && <p className="mt-4 text-sm text-muted">{cat.description}</p>}
           </Card>
           {adoption?.application_id && (
-            <Link href={`/admin/applications/${adoption.application_id}`} className="btn-outline w-full">
+            <Link href={links.application(adoption.application_id)} className="btn-outline w-full">
               View their application
             </Link>
           )}
@@ -905,7 +946,7 @@ export function DemoAdoptedCat({ id }: { id: string }) {
             onClick={() => {
               if (window.confirm(`Put ${cat.name} back on the website as available? The adoption record will be deleted.`)) {
                 returnToAvailable(cat.id);
-                router.push(`/admin/cats/${cat.id}`);
+                router.push(links.cat(cat.id));
               }
             }}
           >
@@ -915,7 +956,7 @@ export function DemoAdoptedCat({ id }: { id: string }) {
       </div>
     </>
   );
-}
+});
 
 /* ------------------------------------------------------------------ account */
 
