@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { slugify } from "@/lib/cats";
 import { isDemo } from "./config";
-import type { Adoption, Application, Cat, CatStatus, Meeting, MeetingStatus } from "@/lib/types";
+import type { Adoption, Application, Cat, CatStatus, Foster, FosterPlacement, Meeting, MeetingStatus } from "@/lib/types";
 import seed from "./seed.json";
 
 export type DemoDB = {
@@ -11,10 +11,12 @@ export type DemoDB = {
   applications: Application[];
   meetings: Meeting[];
   adoptions: Adoption[];
+  fosters: Foster[];
+  foster_placements: FosterPlacement[];
 };
 
 // Bump when seed.json changes so visitors get the new sample data.
-const KEY = "bnr-demo-v2";
+const KEY = "bnr-demo-v3";
 const SESSION_KEY = "bnr-demo-session";
 
 const fresh = (): DemoDB =>
@@ -23,6 +25,8 @@ const fresh = (): DemoDB =>
     applications: seed.applications as unknown as Application[],
     meetings: seed.meetings as unknown as Meeting[],
     adoptions: seed.adoptions as unknown as Adoption[],
+    fosters: seed.fosters as unknown as Foster[],
+    foster_placements: seed.foster_placements as unknown as FosterPlacement[],
   });
 
 let db: DemoDB | null = null;
@@ -151,6 +155,9 @@ export function deleteCat(catId: string) {
   update((d) => {
     d.cats = d.cats.filter((c) => c.id !== catId);
     d.adoptions = d.adoptions.filter((a) => a.cat_id !== catId);
+    d.foster_placements.forEach((p) => {
+      if (p.cat_id === catId) p.cat_id = null;
+    });
     d.applications.forEach((a) => {
       if (a.cat_id === catId) a.cat_id = null;
     });
@@ -215,6 +222,71 @@ export function returnToAvailable(catId: string) {
     d.adoptions = d.adoptions.filter((a) => a.cat_id !== catId);
     const cat = d.cats.find((c) => c.id === catId);
     if (cat) Object.assign(cat, { status: "available", updated_at: now() });
+  });
+}
+
+/* -------------------------------------------------------------- fosters */
+
+export type DemoFosterInput = Pick<Foster, "name" | "email" | "phone" | "city" | "can_foster" | "notes" | "on_break">;
+
+export function saveFoster(input: DemoFosterInput & { id?: string; application_id?: string | null }): string {
+  let fosterId = input.id ?? "";
+  update((d) => {
+    const existing = input.id ? d.fosters.find((f) => f.id === input.id) : undefined;
+    if (existing) {
+      Object.assign(existing, input, { updated_at: now() });
+    } else {
+      fosterId = id("foster");
+      d.fosters.unshift({ application_id: null, ...input, id: fosterId, created_at: now(), updated_at: now() });
+    }
+  });
+  return fosterId;
+}
+
+/** Adds an approved foster applicant to the roster (or links them if their email is already there). */
+export function fosterFromApplication(app: Application) {
+  const db = load();
+  const match = db.fosters.find((f) => f.email && f.email.toLowerCase() === app.email.toLowerCase());
+  if (match) {
+    if (!match.application_id) saveFoster({ ...match, application_id: app.id });
+    return match.id;
+  }
+  const canFoster = app.answers.can_foster;
+  return saveFoster({
+    application_id: app.id,
+    name: app.name,
+    email: app.email,
+    phone: app.phone,
+    city: app.city,
+    can_foster: Array.isArray(canFoster) ? canFoster : [],
+    notes: typeof app.answers.preferences === "string" ? app.answers.preferences : "",
+    on_break: false,
+  });
+}
+
+export function deleteFoster(fosterId: string) {
+  update((d) => {
+    d.fosters = d.fosters.filter((f) => f.id !== fosterId);
+    d.foster_placements = d.foster_placements.filter((p) => p.foster_id !== fosterId);
+  });
+}
+
+export function addPlacement(p: Omit<FosterPlacement, "id" | "created_at">) {
+  update((d) => {
+    d.foster_placements.push({ ...p, id: id("place"), created_at: now() });
+  });
+}
+
+export function endPlacement(placementId: string, endedOn: string) {
+  update((d) => {
+    const p = d.foster_placements.find((x) => x.id === placementId);
+    if (p) p.ended_on = endedOn;
+  });
+}
+
+export function removePlacement(placementId: string) {
+  update((d) => {
+    d.foster_placements = d.foster_placements.filter((x) => x.id !== placementId);
   });
 }
 

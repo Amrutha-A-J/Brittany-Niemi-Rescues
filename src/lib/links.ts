@@ -13,6 +13,7 @@ export const links = {
     byId("/admin/cats", id, "/adopt") + (applicationId ? `${isDemo ? "&" : "?"}application=${applicationId}` : ""),
   application: (id: string) => byId("/admin/applications", id),
   adopted: (id: string) => byId("/admin/adopted", id),
+  foster: (id: string) => byId("/admin/fosters", id),
   /** Public page for a cat. Demo cats added in the browser have no static page, so use the pop-up. */
   publicCat: (slug: string) => (isDemo ? `/adopt?cat=${encodeURIComponent(slug)}` : `/cats/${slug}`),
 };

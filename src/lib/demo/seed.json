@@ -632,5 +632,173 @@
       "notes": "Contract signed. Sent home with a week of food.",
       "created_at": "2026-10-01T20:00:00.000Z"
     }
+  ],
+  "fosters": [
+    {
+      "id": "foster-jess",
+      "application_id": null,
+      "name": "Jess Martin",
+      "email": "jess@example.com",
+      "phone": "306-555-0123",
+      "city": "Moose Jaw",
+      "can_foster": [
+        "Kittens",
+        "Bottle babies",
+        "Moms with litters"
+      ],
+      "notes": "Night-shift nurse, so she's great with bottle babies that need overnight feeds.",
+      "on_break": false,
+      "created_at": "2025-04-20T15:00:00.000Z",
+      "updated_at": "2025-04-20T15:00:00.000Z"
+    },
+    {
+      "id": "foster-dana",
+      "application_id": null,
+      "name": "Dana Klassen",
+      "email": "dana@example.com",
+      "phone": "306-555-0148",
+      "city": "Moose Jaw",
+      "can_foster": [
+        "Adult cats",
+        "Seniors"
+      ],
+      "notes": "Quiet home, no other pets. Prefers calmer adult cats.",
+      "on_break": false,
+      "created_at": "2024-10-15T15:00:00.000Z",
+      "updated_at": "2024-10-15T15:00:00.000Z"
+    },
+    {
+      "id": "foster-alex",
+      "application_id": null,
+      "name": "Alex Chen",
+      "email": "alex@example.com",
+      "phone": "306-555-0156",
+      "city": "Moose Jaw",
+      "can_foster": [
+        "Seniors",
+        "Medical / special needs"
+      ],
+      "notes": "Vet tech. Comfortable with insulin and daily meds.",
+      "on_break": false,
+      "created_at": "2025-09-01T15:00:00.000Z",
+      "updated_at": "2025-09-01T15:00:00.000Z"
+    },
+    {
+      "id": "foster-priya",
+      "application_id": null,
+      "name": "Priya Shah",
+      "email": "priya@example.com",
+      "phone": "306-555-0172",
+      "city": "Moose Jaw",
+      "can_foster": [
+        "Adult cats"
+      ],
+      "notes": "Moving in the spring; happy to foster again after May.",
+      "on_break": true,
+      "created_at": "2025-09-20T15:00:00.000Z",
+      "updated_at": "2025-09-20T15:00:00.000Z"
+    }
+  ],
+  "foster_placements": [
+    {
+      "id": "place-foster-jess-0",
+      "foster_id": "foster-jess",
+      "cat_id": "cat-bean",
+      "cat_name": "Bean",
+      "started_on": "2026-09-20",
+      "ended_on": null,
+      "notes": "Came in at 6 weeks; now eating on his own.",
+      "created_at": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "place-foster-jess-1",
+      "foster_id": "foster-jess",
+      "cat_id": null,
+      "cat_name": "Mochi",
+      "started_on": "2025-05-02",
+      "ended_on": "2025-06-20",
+      "notes": "",
+      "created_at": "2025-05-02T12:00:00.000Z"
+    },
+    {
+      "id": "place-foster-jess-2",
+      "foster_id": "foster-jess",
+      "cat_id": null,
+      "cat_name": "Biscuit",
+      "started_on": "2025-08-10",
+      "ended_on": "2025-09-30",
+      "notes": "Bottle baby, raised from 2 weeks old.",
+      "created_at": "2025-08-10T12:00:00.000Z"
+    },
+    {
+      "id": "place-foster-dana-0",
+      "foster_id": "foster-dana",
+      "cat_id": "cat-luna",
+      "cat_name": "Luna",
+      "started_on": "2026-07-01",
+      "ended_on": "2026-09-25",
+      "notes": "",
+      "created_at": "2026-07-01T12:00:00.000Z"
+    },
+    {
+      "id": "place-foster-dana-1",
+      "foster_id": "foster-dana",
+      "cat_id": null,
+      "cat_name": "Smokey",
+      "started_on": "2024-11-01",
+      "ended_on": "2025-02-14",
+      "notes": "",
+      "created_at": "2024-11-01T12:00:00.000Z"
+    },
+    {
+      "id": "place-foster-dana-2",
+      "foster_id": "foster-dana",
+      "cat_id": null,
+      "cat_name": "Peaches",
+      "started_on": "2025-03-01",
+      "ended_on": "2025-04-20",
+      "notes": "",
+      "created_at": "2025-03-01T12:00:00.000Z"
+    },
+    {
+      "id": "place-foster-dana-3",
+      "foster_id": "foster-dana",
+      "cat_id": null,
+      "cat_name": "Oreo",
+      "started_on": "2025-06-01",
+      "ended_on": "2025-07-30",
+      "notes": "",
+      "created_at": "2025-06-01T12:00:00.000Z"
+    },
+    {
+      "id": "place-foster-alex-0",
+      "foster_id": "foster-alex",
+      "cat_id": "cat-rosie",
+      "cat_name": "Rosie",
+      "started_on": "2026-08-15",
+      "ended_on": null,
+      "notes": "Insulin twice a day; doing great.",
+      "created_at": "2026-08-15T12:00:00.000Z"
+    },
+    {
+      "id": "place-foster-alex-1",
+      "foster_id": "foster-alex",
+      "cat_id": "cat-gus",
+      "cat_name": "Gus",
+      "started_on": "2026-09-01",
+      "ended_on": null,
+      "notes": "",
+      "created_at": "2026-09-01T12:00:00.000Z"
+    },
+    {
+      "id": "place-foster-priya-0",
+      "foster_id": "foster-priya",
+      "cat_id": null,
+      "cat_name": "Ginger",
+      "started_on": "2025-10-01",
+      "ended_on": "2025-12-15",
+      "notes": "",
+      "created_at": "2025-10-01T12:00:00.000Z"
+    }
   ]
 }

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CATEGORIES } from "@/lib/cats";
 import type { CatCategory, CatView } from "@/lib/types";
+import { FilterBar, filterPanelClass } from "./FilterBar";
 
 type Sort = "newest" | "updated" | "name" | "youngest" | "oldest";
 
@@ -51,42 +52,22 @@ export function FilterableCatList({ items }: { items: { cat: CatView; row: React
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted" aria-live="polite">
-          {activeCount ? `${visible.length} of ${items.length}` : items.length} {items.length === 1 ? "cat" : "cats"}
-          {f.sort !== "newest" && ` · ${sortLabel}`}
-          {activeCount > 0 && (
-            <>
-              {" · "}
-              <button type="button" className="underline underline-offset-4 hover:text-ink" onClick={clearFilters}>
-                Clear filters
-              </button>
-            </>
-          )}
-        </p>
-        <button
-          type="button"
-          className={`${open ? "btn-primary" : "btn-outline"} px-4 py-2`}
-          aria-expanded={open}
-          aria-controls="cat-filters"
-          onClick={() => setOpen((o) => !o)}
-        >
-          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden>
-            <path d="M3 5h14M6 10h8M8.5 15h3" strokeLinecap="round" />
-          </svg>
-          Filter &amp; sort
-          {activeCount > 0 && (
-            <span className={`rounded-full px-1.5 text-[11px] ${open ? "bg-white text-ink" : "bg-ink text-white"}`}>
-              {activeCount}
-            </span>
-          )}
-        </button>
-      </div>
+      <FilterBar
+        total={items.length}
+        shown={visible.length}
+        noun={["cat", "cats"]}
+        sortLabel={f.sort !== "newest" ? sortLabel : undefined}
+        activeCount={activeCount}
+        open={open}
+        onToggle={() => setOpen((o) => !o)}
+        onClear={clearFilters}
+        controls="cat-filters"
+      />
 
       {open && (
         <div
           id="cat-filters"
-          className="mb-4 grid grid-cols-2 gap-3 rounded-2xl border border-line bg-white p-4 lg:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))]"
+          className={`${filterPanelClass} lg:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))]`}
         >
           <label className="col-span-2 lg:col-span-1">
             <span className="field-label">Search</span>

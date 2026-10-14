@@ -6,6 +6,7 @@ import { googleCalendarUrl, icsFile, parseLocalDateTime, formatDateTime } from "
 import { button, emailLayout, escapeHtml, rescueInbox, sendEmail, textToHtml } from "@/lib/email";
 import { site } from "@/lib/site";
 import type { FormState } from "./auth-actions";
+import { ensureFosterFromApplication } from "./fosters-db";
 import { staffClient } from "./session";
 
 const on = (fd: FormData, name: string) => fd.get(name) === "on";
@@ -15,7 +16,7 @@ async function loadApplication(id: string) {
   const supabase = await staffClient();
   const { data, error } = await supabase
     .from("applications")
-    .select("id, type, status, name, email, cat_id, cats(id, name, slug, status)")
+    .select("id, type, status, name, email, phone, city, answers, cat_id, cats(id, name, slug, status)")
     .eq("id", id)
     .single();
   if (error) throw new Error(error.message);
@@ -54,6 +55,13 @@ export async function approveApplication(_prev: FormState, fd: FormData): Promis
     revalidatePath(`/cats/${cat.slug}`);
   }
 
+  let fosterNote = "";
+  if (app.type === "foster" && on(fd, "add_to_fosters")) {
+    await ensureFosterFromApplication(supabase, app);
+    revalidatePath("/admin/fosters");
+    fosterNote = " Added to Fosters.";
+  }
+
   let emailNote = "";
   if (on(fd, "send_email")) {
     const message = text(fd, "message");
@@ -66,7 +74,7 @@ export async function approveApplication(_prev: FormState, fd: FormData): Promis
     emailNote = res.ok ? " Email sent." : res.skipped ? " (Email not sent: email isn't set up yet.)" : " The email failed to send.";
   }
   refresh(id);
-  return { message: `Approved.${emailNote}` };
+  return { message: `Approved.${fosterNote}${emailNote}` };
 }
 
 export async function rejectApplication(_prev: FormState, fd: FormData): Promise<FormState> {

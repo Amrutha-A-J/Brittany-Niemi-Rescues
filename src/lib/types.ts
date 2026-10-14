@@ -91,3 +91,30 @@ export type Adoption = {
   notes: string;
   created_at: string;
 };
+
+export type Foster = {
+  id: string;
+  application_id: string | null;
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+  can_foster: string[];
+  notes: string;
+  on_break: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FosterPlacement = {
+  id: string;
+  foster_id: string;
+  cat_id: string | null;
+  cat_name: string;
+  started_on: string;
+  ended_on: string | null;
+  notes: string;
+  created_at: string;
+};
+
+export type FosterWithPlacements = Foster & { foster_placements: FosterPlacement[] };

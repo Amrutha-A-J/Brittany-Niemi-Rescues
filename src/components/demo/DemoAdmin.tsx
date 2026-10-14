@@ -17,6 +17,7 @@ import {
   deleteCat,
   demoLogin,
   deleteApplication,
+  fosterFromApplication,
   resetDemo,
   returnToAvailable,
   saveAdoption,
@@ -597,7 +598,9 @@ function decisionActions(app: Application, db: DemoDB) {
       updateApplication(app.id, { status: "approved", decided_at: new Date().toISOString() });
       const cat = db.cats.find((c) => c.id === app.cat_id);
       if (cat && fd.get("mark_pending") === "on" && cat.status === "available") setCatStatus(cat.id, "pending");
-      return { message: `Approved.${fd.get("send_email") === "on" ? EMAIL_NOTE : ""}` };
+      const addedFoster = app.type === "foster" && fd.get("add_to_fosters") === "on";
+      if (addedFoster) fosterFromApplication(app);
+      return { message: `Approved.${addedFoster ? " Added to Fosters." : ""}${fd.get("send_email") === "on" ? EMAIL_NOTE : ""}` };
     },
     reject: async (_p: FormState, fd: FormData): Promise<FormState> => {
       updateApplication(app.id, { status: "rejected", decided_at: new Date().toISOString() });

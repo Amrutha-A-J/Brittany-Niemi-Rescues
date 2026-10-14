@@ -8,6 +8,7 @@ const items = [
   { href: "/admin/cats", label: "Cats" },
   { href: "/admin/applications/adopt", label: "Adoption applications", count: "adopt" as const },
   { href: "/admin/applications/foster", label: "Foster applications", count: "foster" as const },
+  { href: "/admin/fosters", label: "Fosters" },
   { href: "/admin/meetings", label: "Meet & greets" },
   { href: "/admin/adopted", label: "Adopted" },
   { href: "/admin/account", label: "Account" },
