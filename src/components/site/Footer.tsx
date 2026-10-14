@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { instagramUrl, site } from "@/lib/site";
+import { site } from "@/lib/site";
 import { Logo } from "./Logo";
+import { SocialIcons } from "./SocialIcons";
 
 export function Footer() {
   return (
@@ -9,13 +10,11 @@ export function Footer() {
         <Link href="/" aria-label={`${site.name} home`}>
           <Logo size={24} />
         </Link>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-muted">
+          <SocialIcons />
           <span>
             Cat rescue in {site.city}, {site.region}
           </span>
-          <a href={instagramUrl} className="hover:text-ink" target="_blank" rel="noopener">
-            Instagram
-          </a>
           <span>
             © {new Date().getFullYear()} {site.name}
           </span>

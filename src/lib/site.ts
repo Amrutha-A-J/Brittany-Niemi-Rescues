@@ -15,3 +15,9 @@ export const site = {
 };
 
 export const instagramUrl = `https://www.instagram.com/${site.instagram}/`;
+export const facebookUrl = "https://www.facebook.com/p/Brittany-Niemi-Rescues-61560757773145/";
+
+export const socialLinks = [
+  { name: "Instagram", href: instagramUrl, handle: `@${site.instagram}` },
+  { name: "Facebook", href: facebookUrl, handle: "Brittany Niemi Rescues" },
+] as const;

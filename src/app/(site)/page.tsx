@@ -3,7 +3,8 @@ import { CatBrowser } from "@/components/site/CatBrowser";
 import { JsonLd } from "@/components/site/JsonLd";
 import { Logo } from "@/components/site/Logo";
 import { getAdoptableCats } from "@/lib/data";
-import { instagramUrl, site } from "@/lib/site";
+import { SocialIcon } from "@/components/site/SocialIcons";
+import { site, socialLinks } from "@/lib/site";
 
 export const revalidate = 300;
 
@@ -33,7 +34,7 @@ export default async function HomePage() {
             addressRegion: site.regionCode,
             addressCountry: site.country,
           },
-          sameAs: [instagramUrl],
+          sameAs: socialLinks.map((s) => s.href),
         }}
       />
 
@@ -89,13 +90,19 @@ export default async function HomePage() {
             <HelpCard
               title="Foster"
               body="Open your home for a few weeks. We cover food, litter and vet care. You provide the lap."
-              cta={{ href: "/foster", label: "Become a foster" }}
-            />
-            <HelpCard
-              title="Follow along"
-              body="New arrivals, updates and happy tails, posted on Instagram."
-              cta={{ href: instagramUrl, label: `@${site.instagram}`, external: true }}
-            />
+            >
+              <Link href="/foster" className="btn-outline">
+                Become a foster
+              </Link>
+            </HelpCard>
+            <HelpCard title="Follow along" body="New arrivals, updates and happy tails, posted on Instagram and Facebook.">
+              {socialLinks.map((s) => (
+                <a key={s.name} href={s.href} target="_blank" rel="noopener" className="btn-outline">
+                  <SocialIcon name={s.name} className="h-4 w-4" />
+                  {s.name}
+                </a>
+              ))}
+            </HelpCard>
           </div>
         </div>
       </section>
@@ -103,30 +110,12 @@ export default async function HomePage() {
   );
 }
 
-function HelpCard({
-  title,
-  body,
-  cta,
-}: {
-  title: string;
-  body: string;
-  cta: { href: string; label: string; external?: boolean };
-}) {
+function HelpCard({ title, body, children }: { title: string; body: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col rounded-sm border border-line p-6 sm:p-7">
       <h3 className="font-serif text-[26px]">{title}</h3>
       <p className="mt-3 max-w-[340px] text-sm leading-relaxed text-muted">{body}</p>
-      <div className="mt-6">
-        {cta.external ? (
-          <a href={cta.href} target="_blank" rel="noopener" className="btn-outline">
-            {cta.label}
-          </a>
-        ) : (
-          <Link href={cta.href} className="btn-outline">
-            {cta.label}
-          </Link>
-        )}
-      </div>
+      <div className="mt-6 flex flex-wrap gap-3">{children}</div>
     </div>
   );
 }
