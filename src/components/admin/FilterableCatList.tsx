@@ -17,12 +17,13 @@ const SORTS: { value: Sort; label: string }[] = [
 const DEFAULTS = { q: "", status: "all", category: "all", sex: "all", sort: "newest" as Sort };
 
 /**
- * Admin cat list with search, filters and sorting. Each item carries the cat's data
- * (for filtering) and its already-rendered row, so the server and demo versions can
- * supply their own row actions.
+ * Admin cat list with search, filters and sorting tucked behind a "Filter & sort"
+ * button. Each item carries the cat's data (for filtering) and its already-rendered
+ * row, so the server and demo versions can supply their own row actions.
  */
 export function FilterableCatList({ items }: { items: { cat: CatView; row: React.ReactNode }[] }) {
   const [f, setF] = useState(DEFAULTS);
+  const [open, setOpen] = useState(false);
   const set = (patch: Partial<typeof DEFAULTS>) => setF((s) => ({ ...s, ...patch }));
 
   const visible = useMemo(() => {
@@ -44,71 +45,103 @@ export function FilterableCatList({ items }: { items: { cat: CatView; row: React
     return [...list].sort((a, b) => by[f.sort](a.cat, b.cat));
   }, [items, f]);
 
-  const filtered = f.q !== "" || f.status !== "all" || f.category !== "all" || f.sex !== "all";
+  const activeCount = [f.q !== "", f.status !== "all", f.category !== "all", f.sex !== "all"].filter(Boolean).length;
+  const sortLabel = SORTS.find((s) => s.value === f.sort)?.label;
+  const clearFilters = () => setF({ ...DEFAULTS, sort: f.sort });
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))]">
-        <label className="col-span-2 lg:col-span-1">
-          <span className="field-label">Search</span>
-          <input
-            type="search"
-            className="field py-2"
-            placeholder="Name or colour"
-            value={f.q}
-            onChange={(e) => set({ q: e.target.value })}
-          />
-        </label>
-        <label>
-          <span className="field-label">Status</span>
-          <select className="field py-2" value={f.status} onChange={(e) => set({ status: e.target.value })}>
-            <option value="all">Any</option>
-            <option value="available">Available</option>
-            <option value="pending">Pending</option>
-          </select>
-        </label>
-        <label>
-          <span className="field-label">Age group</span>
-          <select className="field py-2" value={f.category} onChange={(e) => set({ category: e.target.value as CatCategory | "all" })}>
-            <option value="all">Any</option>
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.plural}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span className="field-label">Sex</span>
-          <select className="field py-2" value={f.sex} onChange={(e) => set({ sex: e.target.value })}>
-            <option value="all">Any</option>
-            <option value="female">Female</option>
-            <option value="male">Male</option>
-          </select>
-        </label>
-        <label>
-          <span className="field-label">Sort by</span>
-          <select className="field py-2" value={f.sort} onChange={(e) => set({ sort: e.target.value as Sort })}>
-            {SORTS.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted" aria-live="polite">
+          {activeCount ? `${visible.length} of ${items.length}` : items.length} {items.length === 1 ? "cat" : "cats"}
+          {f.sort !== "newest" && ` · ${sortLabel}`}
+          {activeCount > 0 && (
+            <>
+              {" · "}
+              <button type="button" className="underline underline-offset-4 hover:text-ink" onClick={clearFilters}>
+                Clear filters
+              </button>
+            </>
+          )}
+        </p>
+        <button
+          type="button"
+          className={`${open ? "btn-primary" : "btn-outline"} px-4 py-2`}
+          aria-expanded={open}
+          aria-controls="cat-filters"
+          onClick={() => setOpen((o) => !o)}
+        >
+          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden>
+            <path d="M3 5h14M6 10h8M8.5 15h3" strokeLinecap="round" />
+          </svg>
+          Filter &amp; sort
+          {activeCount > 0 && (
+            <span className={`rounded-full px-1.5 text-[11px] ${open ? "bg-white text-ink" : "bg-ink text-white"}`}>
+              {activeCount}
+            </span>
+          )}
+        </button>
       </div>
 
-      <p className="mb-4 text-sm text-muted" aria-live="polite">
-        {filtered ? `${visible.length} of ${items.length}` : items.length} {items.length === 1 ? "cat" : "cats"}
-        {filtered && (
-          <>
-            {" · "}
-            <button type="button" className="underline underline-offset-4 hover:text-ink" onClick={() => setF({ ...DEFAULTS, sort: f.sort })}>
-              Clear filters
-            </button>
-          </>
-        )}
-      </p>
+      {open && (
+        <div
+          id="cat-filters"
+          className="mb-4 grid grid-cols-2 gap-3 rounded-2xl border border-line bg-white p-4 lg:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))]"
+        >
+          <label className="col-span-2 lg:col-span-1">
+            <span className="field-label">Search</span>
+            <input
+              type="search"
+              className="field py-2"
+              placeholder="Name or colour"
+              autoFocus
+              value={f.q}
+              onChange={(e) => set({ q: e.target.value })}
+            />
+          </label>
+          <label>
+            <span className="field-label">Status</span>
+            <select className="field py-2" value={f.status} onChange={(e) => set({ status: e.target.value })}>
+              <option value="all">Any</option>
+              <option value="available">Available</option>
+              <option value="pending">Pending</option>
+            </select>
+          </label>
+          <label>
+            <span className="field-label">Age group</span>
+            <select
+              className="field py-2"
+              value={f.category}
+              onChange={(e) => set({ category: e.target.value as CatCategory | "all" })}
+            >
+              <option value="all">Any</option>
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.plural}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="field-label">Sex</span>
+            <select className="field py-2" value={f.sex} onChange={(e) => set({ sex: e.target.value })}>
+              <option value="all">Any</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+            </select>
+          </label>
+          <label>
+            <span className="field-label">Sort by</span>
+            <select className="field py-2" value={f.sort} onChange={(e) => set({ sort: e.target.value as Sort })}>
+              {SORTS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
 
       {visible.length > 0 ? (
         <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
@@ -118,7 +151,10 @@ export function FilterableCatList({ items }: { items: { cat: CatView; row: React
         </ul>
       ) : (
         <p className="rounded-2xl border border-dashed border-line bg-white px-6 py-12 text-center text-sm text-muted">
-          No cats match those filters.
+          No cats match those filters.{" "}
+          <button type="button" className="underline underline-offset-4 hover:text-ink" onClick={clearFilters}>
+            Clear filters
+          </button>
         </p>
       )}
     </>
