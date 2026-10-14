@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CATEGORIES } from "@/lib/cats";
+import { CATEGORIES, toCatView } from "@/lib/cats";
+import { useDemoDB } from "@/lib/demo/store";
 import type { CatCategory, CatView } from "@/lib/types";
 import { CatCard } from "./CatCard";
 import { CatModal } from "./CatModal";
@@ -52,8 +53,14 @@ function buildUrl(filters: Filters, cat: string | null, syncFilters: boolean) {
   return `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`;
 }
 
-export function CatBrowser({ cats, variant }: { cats: CatView[]; variant: "home" | "full" }) {
+export function CatBrowser({ cats: serverCats, variant }: { cats: CatView[]; variant: "home" | "full" }) {
   const full = variant === "full";
+  // Demo mode: show the cats from this browser's demo data (falls back to the server list while loading).
+  const demo = useDemoDB();
+  const cats = useMemo(
+    () => (demo ? demo.cats.filter((c) => c.status !== "adopted").map((c) => toCatView(c)) : serverCats),
+    [demo, serverCats],
+  );
   const [filters, setFilters] = useState<Filters>(DEFAULTS);
   const [openSlug, setOpenSlug] = useState<string | null>(null);
   const pushedRef = useRef(false);

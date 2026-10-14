@@ -1,14 +1,27 @@
+"use client";
+
 import Link from "next/link";
-import { setMeetingStatus } from "@/lib/admin/application-actions";
+import { useState } from "react";
 import { meetingGoogleUrl, type MeetingRow } from "@/lib/admin/meetings";
 import { formatDateTime } from "@/lib/calendar";
-import { nowMs } from "@/lib/time";
 
-export function MeetingList({ meetings, showApplicant = true }: { meetings: MeetingRow[]; showApplicant?: boolean }) {
+type Props = {
+  meetings: MeetingRow[];
+  showApplicant?: boolean;
+  /** Form action that receives id, status and application_id. */
+  setStatus: (formData: FormData) => void | Promise<void>;
+  /** Link for the Apple/Outlook (.ics) download. Defaults to the server route. */
+  icsHref?: (m: MeetingRow) => string;
+};
+
+const serverIcs = (m: MeetingRow) => `/admin/meetings/${m.id}/ics`;
+
+export function MeetingList({ meetings, showApplicant = true, setStatus, icsHref = serverIcs }: Props) {
+  const [now] = useState(() => Date.now());
   return (
     <ul className="divide-y divide-line">
       {meetings.map((m) => {
-        const past = new Date(m.starts_at).getTime() < nowMs();
+        const past = new Date(m.starts_at).getTime() < now;
         return (
           <li key={m.id} className="flex flex-wrap items-start justify-between gap-3 py-4 first:pt-0 last:pb-0">
             <div className="min-w-0">
@@ -35,16 +48,14 @@ export function MeetingList({ meetings, showApplicant = true }: { meetings: Meet
                   <a href={meetingGoogleUrl(m)} target="_blank" rel="noopener" className="btn-ghost px-3 py-1.5 text-xs">
                     + Google Calendar
                   </a>
-                  <a href={`/admin/meetings/${m.id}/ics`} className="btn-ghost px-3 py-1.5 text-xs">
+                  <a href={icsHref(m)} download="meet-and-greet.ics" className="btn-ghost px-3 py-1.5 text-xs">
                     + Apple / Outlook
                   </a>
                 </>
               )}
-              {m.status === "scheduled" && past && (
-                <StatusButton m={m} status="completed" label="Mark as happened" />
-              )}
-              {m.status === "scheduled" && <StatusButton m={m} status="cancelled" label="Cancel" />}
-              {m.status !== "scheduled" && <StatusButton m={m} status="scheduled" label="Undo" />}
+              {m.status === "scheduled" && past && <StatusButton m={m} status="completed" label="Mark as happened" setStatus={setStatus} />}
+              {m.status === "scheduled" && <StatusButton m={m} status="cancelled" label="Cancel" setStatus={setStatus} />}
+              {m.status !== "scheduled" && <StatusButton m={m} status="scheduled" label="Undo" setStatus={setStatus} />}
             </div>
           </li>
         );
@@ -53,9 +64,19 @@ export function MeetingList({ meetings, showApplicant = true }: { meetings: Meet
   );
 }
 
-function StatusButton({ m, status, label }: { m: MeetingRow; status: string; label: string }) {
+function StatusButton({
+  m,
+  status,
+  label,
+  setStatus,
+}: {
+  m: MeetingRow;
+  status: string;
+  label: string;
+  setStatus: Props["setStatus"];
+}) {
   return (
-    <form action={setMeetingStatus}>
+    <form action={setStatus}>
       <input type="hidden" name="id" value={m.id} />
       <input type="hidden" name="status" value={status} />
       <input type="hidden" name="application_id" value={m.application_id} />

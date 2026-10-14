@@ -1,3 +1,5 @@
+import { DemoApplications } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { ApplicationStatusBadge, Empty, PageHeader } from "@/components/admin/ui";
 import { requireStaff } from "@/lib/admin/session";
@@ -19,6 +21,10 @@ type Row = Application & { cats: { id: string; name: string } | null };
 
 export default async function ApplicationsPage({ searchParams }: PageProps<"/admin/applications">) {
   const sp = await searchParams;
+  if (isDemo) {
+    const str = (v: unknown) => (typeof v === "string" ? v : undefined);
+    return <DemoApplications status={str(sp.status)} type={str(sp.type)} cat={str(sp.cat)} />;
+  }
   const status = TABS.some((t) => t.value === sp.status) ? (sp.status as string) : "new";
   const type = sp.type === "adopt" || sp.type === "foster" ? sp.type : "";
   const catId = typeof sp.cat === "string" ? sp.cat : "";

@@ -1,5 +1,7 @@
+import { DemoOverview } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
-import { MeetingList } from "@/components/admin/MeetingList";
+import { ServerMeetingList as MeetingList } from "@/components/admin/ServerMeetingList";
 import { Card, Empty, PageHeader } from "@/components/admin/ui";
 import { MEETING_SELECT, type MeetingRow } from "@/lib/admin/meetings";
 import { requireStaff } from "@/lib/admin/session";
@@ -11,6 +13,7 @@ import { nowMs } from "@/lib/time";
 export const metadata = { title: "Overview" };
 
 export default async function OverviewPage() {
+  if (isDemo) return <DemoOverview />;
   const { supabase } = await requireStaff();
   const today = new Date().toISOString().slice(0, 10);
   const [cats, apps, meetings, followUps] = await Promise.all([

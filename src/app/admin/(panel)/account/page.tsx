@@ -1,3 +1,5 @@
+import { DemoAccount } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { ActionForm, SubmitButton } from "@/components/admin/Forms";
 import { Card, PageHeader } from "@/components/admin/ui";
@@ -7,6 +9,7 @@ import { requireStaff } from "@/lib/admin/session";
 export const metadata = { title: "Account" };
 
 export default async function AccountPage() {
+  if (isDemo) return <DemoAccount />;
   const { user } = await requireStaff();
   return (
     <>

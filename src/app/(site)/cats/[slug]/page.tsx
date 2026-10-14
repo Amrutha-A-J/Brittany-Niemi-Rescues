@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DemoCatPage } from "@/components/demo/DemoPublic";
 import { CatDetails } from "@/components/site/CatDetails";
+import { isDemo } from "@/lib/demo/config";
 import { JsonLd } from "@/components/site/JsonLd";
 import { PhotoCarousel } from "@/components/site/PhotoCarousel";
 import { metaDescription } from "@/lib/cats";
@@ -41,6 +43,13 @@ export async function generateMetadata({ params }: PageProps<"/cats/[slug]">): P
 
 export default async function CatPage({ params }: PageProps<"/cats/[slug]">) {
   const { slug } = await params;
+  if (isDemo) {
+    return (
+      <section className="container-page pb-24 pt-8">
+        <DemoCatPage slug={slug} />
+      </section>
+    );
+  }
   const cat = await getCatBySlug(slug);
   if (!cat) notFound();
 

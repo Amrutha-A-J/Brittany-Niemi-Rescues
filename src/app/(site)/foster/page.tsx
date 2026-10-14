@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { DemoApplicationForm } from "@/components/demo/DemoPublic";
 import { ApplicationForm } from "@/components/site/ApplicationForm";
+import { isDemo } from "@/lib/demo/config";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -17,7 +19,7 @@ export default function FosterPage() {
         Fosters are the heart of our rescue. You open your home for a few weeks or months, and we cover food, litter and
         vet care. Every foster home means one more cat we can say yes to.
       </p>
-      <ApplicationForm type="foster" />
+      {isDemo ? <DemoApplicationForm type="foster" /> : <ApplicationForm type="foster" />}
     </section>
   );
 }

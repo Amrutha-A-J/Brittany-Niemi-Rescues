@@ -10,12 +10,15 @@ export function ApplicationForm({
   type,
   cats = [],
   defaultCat = "",
+  submit = submitApplication,
 }: {
   type: ApplicationType;
   cats?: { slug: string; name: string; status: string }[];
   defaultCat?: string;
+  /** Defaults to the real server action; demo mode passes a browser-only one. */
+  submit?: (prev: ApplyState, formData: FormData) => Promise<ApplyState>;
 }) {
-  const [state, action, pending] = useActionState<ApplyState, FormData>(submitApplication, {});
+  const [state, action, pending] = useActionState<ApplyState, FormData>(submit, {});
   const [values, setValues] = useState<Record<string, string>>({ cat: defaultCat });
   const [started] = useState(() => Date.now());
   const errors = state.fieldErrors ?? {};

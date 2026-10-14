@@ -5,6 +5,8 @@ import { approveApplication, rejectApplication, scheduleMeeting } from "@/lib/ad
 import type { FormState } from "@/lib/admin/auth-actions";
 import { StatusMessage, SubmitButton } from "./Forms";
 
+type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
+
 type Props = {
   id: string;
   firstName: string;
@@ -12,7 +14,11 @@ type Props = {
   catAvailable: boolean;
   type: "adopt" | "foster";
   defaultWhen: string;
+  /** Defaults to the real server actions. */
+  actions?: { approve: Action; reject: Action; schedule: Action };
 };
+
+const serverActions = { approve: approveApplication, reject: rejectApplication, schedule: scheduleMeeting };
 
 export function ApplicationActions(props: Props) {
   const [tab, setTab] = useState<"meet" | "approve" | "reject" | null>(null);
@@ -38,8 +44,8 @@ export function ApplicationActions(props: Props) {
   );
 }
 
-function MeetForm({ id, defaultWhen }: Props) {
-  const [state, action] = useActionState<FormState, FormData>(scheduleMeeting, {});
+function MeetForm({ id, defaultWhen, actions = serverActions }: Props) {
+  const [state, action] = useActionState<FormState, FormData>(actions.schedule, {});
   return (
     <form action={action} className="space-y-4 rounded-xl bg-card p-4" onReset={(e) => !state.ok && e.preventDefault()}>
       <input type="hidden" name="id" value={id} />
@@ -76,8 +82,16 @@ function MeetForm({ id, defaultWhen }: Props) {
   );
 }
 
-function DecisionForm({ kind, id, firstName, catName, catAvailable, type }: Props & { kind: "approve" | "reject" }) {
-  const [state, action] = useActionState<FormState, FormData>(kind === "approve" ? approveApplication : rejectApplication, {});
+function DecisionForm({
+  kind,
+  id,
+  firstName,
+  catName,
+  catAvailable,
+  type,
+  actions = serverActions,
+}: Props & { kind: "approve" | "reject" }) {
+  const [state, action] = useActionState<FormState, FormData>(kind === "approve" ? actions.approve : actions.reject, {});
   const defaultMessage =
     kind === "approve"
       ? type === "adopt"

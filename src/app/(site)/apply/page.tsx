@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { DemoApplicationForm } from "@/components/demo/DemoPublic";
 import { ApplicationForm } from "@/components/site/ApplicationForm";
+import { isDemo } from "@/lib/demo/config";
 import { getAdoptableCats } from "@/lib/data";
 import { site } from "@/lib/site";
 
@@ -22,7 +24,11 @@ export default async function ApplyPage({ searchParams }: PageProps<"/apply">) {
       <p className="mb-10 text-[15px] leading-relaxed text-muted">
         It takes about 5 minutes. There are no wrong answers. It just helps us match the right cat with the right home.
       </p>
-      <ApplicationForm type="adopt" cats={options} defaultCat={defaultCat} />
+      {isDemo ? (
+        <DemoApplicationForm type="adopt" defaultCat={typeof cat === "string" ? cat : ""} />
+      ) : (
+        <ApplicationForm type="adopt" cats={options} defaultCat={defaultCat} />
+      )}
     </section>
   );
 }

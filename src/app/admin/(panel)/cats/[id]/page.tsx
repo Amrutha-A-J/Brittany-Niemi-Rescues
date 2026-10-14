@@ -1,3 +1,5 @@
+import { DemoCatEditor } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CatForm } from "@/components/admin/CatForm";
@@ -10,6 +12,7 @@ export const metadata = { title: "Edit cat" };
 
 export default async function EditCatPage({ params }: PageProps<"/admin/cats/[id]">) {
   const { id } = await params;
+  if (isDemo) return <DemoCatEditor id={id} />;
   const { supabase } = await requireStaff();
   const { data } = await supabase.from("cats").select(CAT_SELECT).eq("id", id).maybeSingle();
   if (!data) notFound();

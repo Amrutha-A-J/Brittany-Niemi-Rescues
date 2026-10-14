@@ -1,3 +1,5 @@
+import { DemoAdopted } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { Empty, PageHeader, Thumb } from "@/components/admin/ui";
 import { requireStaff } from "@/lib/admin/session";
@@ -17,6 +19,7 @@ type Row = {
 
 export default async function AdoptedPage({ searchParams }: PageProps<"/admin/adopted">) {
   const { q } = await searchParams;
+  if (isDemo) return <DemoAdopted q={typeof q === "string" ? q : undefined} />;
   const search = typeof q === "string" ? q.trim().toLowerCase() : "";
   const { supabase } = await requireStaff();
   const { data } = await supabase

@@ -12,9 +12,9 @@ type Photo = { path: string; alt: string; url: string; uploading?: boolean };
 const MAX_EDGE = 1600;
 
 /** Resize to at most 1600px and convert to WebP in the browser before uploading. */
-async function compress(file: File): Promise<Blob> {
+async function compress(file: File, maxEdge = MAX_EDGE): Promise<Blob> {
   const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+  const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(bitmap.width * scale);
   canvas.height = Math.round(bitmap.height * scale);
@@ -31,7 +31,25 @@ function birthDateFromAge(years: number, months: number) {
   return d.toISOString().slice(0, 10);
 }
 
-export function CatForm({ cat }: { cat?: Cat }) {
+type CatFormProps = {
+  cat?: Cat;
+  /** Defaults to the real server action. */
+  onSave?: (input: CatInput) => Promise<{ error?: string; id?: string }>;
+  /** Stores a processed photo and returns its path. Defaults to Supabase Storage. */
+  upload?: (blob: Blob, path: string) => Promise<string>;
+  /** Longest photo edge in px (demo mode uses smaller photos to fit browser storage). */
+  maxEdge?: number;
+};
+
+async function uploadToSupabase(blob: Blob, path: string) {
+  const { error } = await createClient()
+    .storage.from("cat-photos")
+    .upload(path, blob, { contentType: "image/webp", cacheControl: "31536000" });
+  if (error) throw error;
+  return path;
+}
+
+export function CatForm({ cat, onSave = saveCat, upload = uploadToSupabase, maxEdge = MAX_EDGE }: CatFormProps) {
   const router = useRouter();
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +89,6 @@ export function CatForm({ cat }: { cat?: Cat }) {
     const images = [...files].filter((f) => f.type.startsWith("image/"));
     if (!images.length) return;
     setError(null);
-    const supabase = createClient();
     const pending = images.map((f) => ({
       path: `${folder}/${crypto.randomUUID()}.webp`,
       alt: "",
@@ -84,12 +101,11 @@ export function CatForm({ cat }: { cat?: Cat }) {
     await Promise.all(
       pending.map(async (p) => {
         try {
-          const blob = await compress(p.file);
-          const { error } = await supabase.storage
-            .from("cat-photos")
-            .upload(p.path, blob, { contentType: "image/webp", cacheControl: "31536000" });
-          if (error) throw error;
-          setPhotos((list) => list.map((x) => (x.path === p.path ? { ...x, uploading: false } : x)));
+          const blob = await compress(p.file, maxEdge);
+          const stored = await upload(blob, p.path);
+          setPhotos((list) =>
+            list.map((x) => (x.path === p.path ? { ...x, path: stored, url: photoUrl(stored), uploading: false } : x)),
+          );
         } catch (e) {
           setPhotos((list) => list.filter((x) => x.path !== p.path));
           setError(`Couldn't upload ${p.file.name}: ${e instanceof Error ? e.message : "unknown error"}`);
@@ -125,7 +141,7 @@ export function CatForm({ cat }: { cat?: Cat }) {
       photos: photos.map((p) => ({ path: p.path, alt: p.alt })),
     };
     startSaving(async () => {
-      const res = await saveCat(input);
+      const res = await onSave(input);
       if (res.error) {
         setError(res.error);
         return;

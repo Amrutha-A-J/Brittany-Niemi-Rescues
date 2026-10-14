@@ -1,14 +1,18 @@
 import { toCatView } from "./cats";
-import { sampleCats } from "./sample-data";
+import { isDemo } from "./demo/config";
+import seed from "./demo/seed.json";
 import { createPublicClient } from "./supabase/public";
 import { isSupabaseConfigured } from "./supabase/config";
 import type { Cat, CatView } from "./types";
+
+const sampleCats = seed.cats as unknown as Cat[];
+const useSample = isDemo || !isSupabaseConfigured;
 
 export const CAT_SELECT = "*, cat_photos(id, path, alt, position)";
 
 /** Cats that are looking for a home (available + pending), newest first. */
 export async function getAdoptableCats(): Promise<CatView[]> {
-  if (!isSupabaseConfigured) {
+  if (useSample) {
     return sampleCats.filter((c) => c.status !== "adopted").map((c) => toCatView(c));
   }
   const supabase = createPublicClient();
@@ -22,7 +26,7 @@ export async function getAdoptableCats(): Promise<CatView[]> {
 }
 
 export async function getCatBySlug(slug: string): Promise<CatView | null> {
-  if (!isSupabaseConfigured) {
+  if (useSample) {
     const cat = sampleCats.find((c) => c.slug === slug);
     return cat ? toCatView(cat) : null;
   }

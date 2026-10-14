@@ -23,6 +23,7 @@ export function AdoptionForm({
   defaultApplication,
   defaultFee,
   isNew,
+  action: saveAction = saveAdoption,
 }: {
   catId: string;
   catName: string;
@@ -31,8 +32,10 @@ export function AdoptionForm({
   defaultApplication?: string;
   defaultFee?: number | null;
   isNew: boolean;
+  /** Defaults to the real server action. */
+  action?: (prev: FormState, formData: FormData) => Promise<FormState>;
 }) {
-  const [state, action] = useActionState<FormState, FormData>(saveAdoption, {});
+  const [state, action] = useActionState<FormState, FormData>(saveAction, {});
   const initialApp = applicants.find((a) => a.id === (record?.application_id ?? defaultApplication));
   const [{ today, in2Weeks }] = useState(() => {
     const now = new Date();

@@ -1,3 +1,5 @@
+import { DemoForgotPassword } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { AuthCard } from "@/components/admin/AuthCard";
 import { ActionForm, SubmitButton } from "@/components/admin/Forms";
@@ -6,6 +8,7 @@ import { requestPasswordReset } from "@/lib/admin/auth-actions";
 export const metadata = { title: "Reset password" };
 
 export default function ForgotPasswordPage() {
+  if (isDemo) return <DemoForgotPassword />;
   return (
     <AuthCard title="Reset your password">
       <p className="mb-5 text-sm leading-relaxed text-muted">

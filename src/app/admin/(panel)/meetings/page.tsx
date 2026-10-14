@@ -1,4 +1,6 @@
-import { MeetingList } from "@/components/admin/MeetingList";
+import { DemoMeetings } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
+import { ServerMeetingList as MeetingList } from "@/components/admin/ServerMeetingList";
 import { Card, Empty, PageHeader } from "@/components/admin/ui";
 import { MEETING_SELECT, type MeetingRow } from "@/lib/admin/meetings";
 import { requireStaff } from "@/lib/admin/session";
@@ -7,6 +9,7 @@ import { nowMs } from "@/lib/time";
 export const metadata = { title: "Meet & greets" };
 
 export default async function MeetingsPage() {
+  if (isDemo) return <DemoMeetings />;
   const { supabase } = await requireStaff();
   const since = new Date(nowMs() - 3 * 3600_000).toISOString();
   const [{ data: upcoming }, { data: past }] = await Promise.all([

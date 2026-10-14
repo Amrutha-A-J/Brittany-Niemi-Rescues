@@ -7,6 +7,25 @@ The website is a Next.js app (`web/`) backed by Supabase (database, logins, phot
 
 ---
 
+## 0. Demo mode (no backend)
+
+For design reviews, the site runs entirely in the browser with no database:
+
+```bash
+npm run dev:demo        # http://localhost:3001
+```
+
+- Sample data comes from `src/lib/demo/seed.json` (cats, applications, a meet & greet, an adoption). Photos are from TheCatAPI.
+- Admin login: **brittany / catsrule** (set in `seed.json`). This isn't real security; demo data only.
+- Everything works: adding cats and photos, applying, approving, scheduling, adopting. Changes are saved in that
+  visitor's own browser only. "Reset demo data" in the admin sidebar starts over.
+- A banner marks it as a preview, and it's hidden from Google.
+- To deploy the demo on Vercel, set the environment variable `NEXT_PUBLIC_DEMO=1` and nothing else.
+
+Turning demo mode off (no `NEXT_PUBLIC_DEMO`) switches back to the real Supabase backend described below.
+
+---
+
 ## 1. Run everything on your Mac
 
 You need [Homebrew](https://brew.sh) and Node 20+. Docker runs through Colima, which is free and needs no admin password.

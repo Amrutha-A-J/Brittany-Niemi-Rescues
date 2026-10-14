@@ -1,8 +1,10 @@
+import { DemoApplication } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApplicationActions } from "@/components/admin/ApplicationActions";
 import { ActionForm, ConfirmSubmit, SubmitButton } from "@/components/admin/Forms";
-import { MeetingList } from "@/components/admin/MeetingList";
+import { ServerMeetingList as MeetingList } from "@/components/admin/ServerMeetingList";
 import { ApplicationStatusBadge, Card, PageHeader } from "@/components/admin/ui";
 import { deleteApplication, reopenApplication, saveNotes } from "@/lib/admin/application-actions";
 import { MEETING_SELECT, type MeetingRow } from "@/lib/admin/meetings";
@@ -16,6 +18,7 @@ export const metadata = { title: "Application" };
 
 export default async function ApplicationPage({ params }: PageProps<"/admin/applications/[id]">) {
   const { id } = await params;
+  if (isDemo) return <DemoApplication id={id} />;
   const { supabase } = await requireStaff();
   const [{ data }, { data: meetings }] = await Promise.all([
     supabase.from("applications").select("*, cats(id, name, slug, status)").eq("id", id).maybeSingle(),

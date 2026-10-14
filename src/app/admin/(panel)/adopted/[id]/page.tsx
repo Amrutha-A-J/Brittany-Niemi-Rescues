@@ -1,3 +1,5 @@
+import { DemoAdoptedCat } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdoptionForm } from "@/components/admin/AdoptionForm";
@@ -14,6 +16,7 @@ export const metadata = { title: "Adoption record" };
 
 export default async function AdoptedCatPage({ params }: PageProps<"/admin/adopted/[id]">) {
   const { id } = await params;
+  if (isDemo) return <DemoAdoptedCat id={id} />;
   const { supabase } = await requireStaff();
   const [{ data: catRow }, { data: record }] = await Promise.all([
     supabase.from("cats").select(CAT_SELECT).eq("id", id).maybeSingle(),

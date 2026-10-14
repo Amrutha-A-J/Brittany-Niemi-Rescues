@@ -1,6 +1,7 @@
 "use server";
 
-import { applicationFields, applicationTypeLabel, contactFields } from "./forms";
+import { parseApplication, looksLikeSpam } from "./application-validate";
+import { applicationTypeLabel } from "./forms";
 import { button, emailLayout, escapeHtml, rescueInbox, sendEmail } from "./email";
 import { site } from "./site";
 import { createPublicClient } from "./supabase/public";
@@ -13,52 +14,19 @@ export type ApplyState = {
   fieldErrors?: Record<string, string>;
 };
 
-const MAX = 4000;
-
 export async function submitApplication(_prev: ApplyState, formData: FormData): Promise<ApplyState> {
   const type = formData.get("type") === "foster" ? "foster" : ("adopt" as ApplicationType);
 
-  // Spam checks: a hidden field bots fill in, and a minimum time on the page.
-  const started = Number(formData.get("started") || 0);
-  if (formData.get("website") || !started || Date.now() - started < 3000) {
-    return { ok: true }; // pretend success so bots don't retry
-  }
+  if (looksLikeSpam(formData)) return { ok: true }; // pretend success so bots don't retry
 
   if (!isSupabaseConfigured) {
     return { error: "Applications aren't switched on yet. Please message us on Instagram in the meantime." };
   }
 
-  const fieldErrors: Record<string, string> = {};
-  const str = (name: string) => String(formData.get(name) ?? "").trim().slice(0, MAX);
-
-  const contact = Object.fromEntries(contactFields.map((f) => [f.name, str(f.name)]));
-  for (const f of contactFields) {
-    if (f.required && !contact[f.name]) fieldErrors[f.name] = "Required";
-  }
-  if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) fieldErrors.email = "Enter a valid email";
-
-  const answers: Record<string, string | string[]> = {};
-  for (const f of applicationFields[type]) {
-    const visible = !f.showIf || f.showIf.values.includes(str(f.showIf.field));
-    if (!visible) continue;
-    if (f.type === "checkboxes") {
-      const values = formData
-        .getAll(f.name)
-        .map(String)
-        .filter((v) => f.options?.includes(v));
-      if (f.required && values.length === 0) fieldErrors[f.name] = "Choose at least one";
-      answers[f.name] = values;
-    } else {
-      const v = str(f.name);
-      if (f.required && !v) fieldErrors[f.name] = "Required";
-      if (v && f.options && !f.options.includes(v)) fieldErrors[f.name] = "Choose an option";
-      answers[f.name] = v;
-    }
-  }
+  const { contact, answers, catSlug, fieldErrors } = parseApplication(type, formData);
 
   const supabase = createPublicClient();
   let cat: { id: string; name: string } | null = null;
-  const catSlug = str("cat");
   if (type === "adopt" && catSlug) {
     const { data } = await supabase.from("cats").select("id, name").eq("slug", catSlug).maybeSingle();
     cat = data;

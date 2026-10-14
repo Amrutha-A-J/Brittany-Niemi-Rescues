@@ -1,3 +1,5 @@
+import { DemoPanel } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { Logo } from "@/components/site/Logo";
@@ -5,6 +7,7 @@ import { logout } from "@/lib/admin/auth-actions";
 import { requireStaff } from "@/lib/admin/session";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
+  if (isDemo) return <DemoPanel>{children}</DemoPanel>;
   const { supabase, user, isStaff } = await requireStaff();
 
   if (!isStaff) {

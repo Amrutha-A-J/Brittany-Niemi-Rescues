@@ -1,3 +1,5 @@
+import { DemoCats } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { CatStatusBadge, Empty, PageHeader, Thumb } from "@/components/admin/ui";
 import { deleteCat, setCatStatus } from "@/lib/admin/cat-actions";
@@ -11,6 +13,7 @@ export const metadata = { title: "Cats" };
 
 export default async function AdminCatsPage({ searchParams }: PageProps<"/admin/cats">) {
   const { saved } = await searchParams;
+  if (isDemo) return <DemoCats saved={typeof saved === "string" ? saved : undefined} />;
   const { supabase } = await requireStaff();
   const { data } = await supabase
     .from("cats")

@@ -1,5 +1,5 @@
 /**
- * Creates a rescue login and (optionally) loads the 10 sample cats.
+ * Creates a rescue login and loads the sample cats from src/lib/demo/seed.json.
  *
  *   node --env-file=.env.local scripts/seed-demo.mts [email] [password]
  *
@@ -7,7 +7,7 @@
  * Safe to re-run: existing users and cats are left alone.
  */
 import { createClient } from "@supabase/supabase-js";
-import { sampleCats } from "../src/lib/sample-data.ts";
+import seed from "../src/lib/demo/seed.json" with { type: "json" };
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -35,13 +35,19 @@ const { error: staffError } = await supabase.from("staff").upsert({ user_id: use
 if (staffError) throw staffError;
 console.log("✓ Added as rescue staff");
 
-// 2. Sample cats (only into an empty database)
+// 2. Sample cats with photos (only into an empty database)
 const { count } = await supabase.from("cats").select("id", { count: "exact", head: true });
 if (!count) {
-  const rows = sampleCats.map(({ id: _id, cat_photos: _p, ...cat }) => cat);
-  const { error } = await supabase.from("cats").insert(rows);
-  if (error) throw error;
-  console.log(`✓ Added ${rows.length} sample cats`);
+  for (const { id: _id, cat_photos, ...cat } of seed.cats) {
+    const { data, error } = await supabase.from("cats").insert(cat).select("id").single();
+    if (error) throw error;
+    if (cat_photos.length) {
+      const rows = cat_photos.map(({ path, alt, position }) => ({ cat_id: data.id, path, alt, position }));
+      const { error: photoError } = await supabase.from("cat_photos").insert(rows);
+      if (photoError) throw photoError;
+    }
+  }
+  console.log(`✓ Added ${seed.cats.length} sample cats with photos`);
 } else {
   console.log(`• ${count} cats already in the database, skipped sample cats`);
 }

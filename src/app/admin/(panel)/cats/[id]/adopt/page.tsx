@@ -1,3 +1,5 @@
+import { DemoAdoptCat } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
 import { notFound, redirect } from "next/navigation";
 import { AdoptionForm } from "@/components/admin/AdoptionForm";
 import { PageHeader } from "@/components/admin/ui";
@@ -9,6 +11,7 @@ export const metadata = { title: "Mark as adopted" };
 export default async function AdoptCatPage({ params, searchParams }: PageProps<"/admin/cats/[id]/adopt">) {
   const { id } = await params;
   const { application } = await searchParams;
+  if (isDemo) return <DemoAdoptCat id={id} application={typeof application === "string" ? application : undefined} />;
   const { supabase } = await requireStaff();
   const { data: cat } = await supabase.from("cats").select("id, name, status, adoption_fee").eq("id", id).maybeSingle();
   if (!cat) notFound();

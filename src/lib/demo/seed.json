@@ -1,0 +1,540 @@
+{
+  "login": {
+    "username": "brittany",
+    "password": "catsrule"
+  },
+  "cats": [
+    {
+      "breed": "Domestic shorthair",
+      "status": "available",
+      "special_needs": false,
+      "special_needs_notes": "",
+      "good_with_kids": "yes",
+      "good_with_cats": "yes",
+      "good_with_dogs": "unknown",
+      "vaccinated": true,
+      "name": "Pickle",
+      "sex": "female",
+      "birth_date": "2026-08-05",
+      "color": "Grey tabby",
+      "personality": [
+        "Playful",
+        "Curious",
+        "Loves feather toys"
+      ],
+      "description": "Pickle is a tiny tornado who will chase anything that moves, then fall asleep in your lap.",
+      "adoption_fee": 250,
+      "id": "cat-pickle",
+      "slug": "pickle",
+      "spayed_neutered": false,
+      "microchipped": false,
+      "created_at": "2026-10-14T15:00:00.000Z",
+      "updated_at": "2026-10-14T15:00:00.000Z",
+      "cat_photos": [
+        {
+          "id": "photo-pickle-0",
+          "path": "https://cdn2.thecatapi.com/images/25r.jpg",
+          "alt": "",
+          "position": 0
+        },
+        {
+          "id": "photo-pickle-1",
+          "path": "https://cdn2.thecatapi.com/images/b79.jpg",
+          "alt": "",
+          "position": 1
+        },
+        {
+          "id": "photo-pickle-2",
+          "path": "https://cdn2.thecatapi.com/images/a42.jpg",
+          "alt": "",
+          "position": 2
+        }
+      ]
+    },
+    {
+      "breed": "Domestic shorthair",
+      "status": "available",
+      "special_needs": false,
+      "special_needs_notes": "",
+      "good_with_kids": "unknown",
+      "good_with_cats": "yes",
+      "good_with_dogs": "unknown",
+      "vaccinated": true,
+      "name": "Bean",
+      "sex": "male",
+      "birth_date": "2026-07-22",
+      "color": "Black",
+      "personality": [
+        "Cuddly",
+        "Chatty"
+      ],
+      "description": "Bean is a little black panther with a big purr. He loves being carried around like a baby.",
+      "adoption_fee": 250,
+      "id": "cat-bean",
+      "slug": "bean",
+      "spayed_neutered": false,
+      "microchipped": false,
+      "created_at": "2026-10-13T15:00:00.000Z",
+      "updated_at": "2026-10-13T15:00:00.000Z",
+      "cat_photos": [
+        {
+          "id": "photo-bean-0",
+          "path": "https://cdn2.thecatapi.com/images/d60.jpg",
+          "alt": "",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "breed": "Domestic shorthair",
+      "status": "available",
+      "special_needs": false,
+      "special_needs_notes": "",
+      "good_with_kids": "unknown",
+      "good_with_cats": "yes",
+      "good_with_dogs": "unknown",
+      "vaccinated": true,
+      "name": "Juniper",
+      "sex": "female",
+      "birth_date": "2026-02-10",
+      "color": "Cream",
+      "personality": [
+        "Independent",
+        "Smart"
+      ],
+      "description": "Juniper is clever, a little sassy, and loves a sunny windowsill.",
+      "adoption_fee": 200,
+      "id": "cat-juniper",
+      "slug": "juniper",
+      "spayed_neutered": true,
+      "microchipped": true,
+      "created_at": "2026-10-12T15:00:00.000Z",
+      "updated_at": "2026-10-12T15:00:00.000Z",
+      "cat_photos": [
+        {
+          "id": "photo-juniper-0",
+          "path": "https://cdn2.thecatapi.com/images/5hmYjVhib.jpg",
+          "alt": "",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "breed": "Domestic shorthair",
+      "status": "pending",
+      "special_needs": false,
+      "special_needs_notes": "",
+      "good_with_kids": "unknown",
+      "good_with_cats": "yes",
+      "good_with_dogs": "yes",
+      "vaccinated": true,
+      "name": "Otis",
+      "sex": "male",
+      "birth_date": "2024-09-20",
+      "color": "Black & white",
+      "personality": [
+        "Gentle",
+        "Laid-back",
+        "Box enthusiast"
+      ],
+      "description": "Otis is a gentle tuxedo who gets along with everyone and has never met a cardboard box he didn't like.",
+      "adoption_fee": 200,
+      "id": "cat-otis",
+      "slug": "otis",
+      "spayed_neutered": true,
+      "microchipped": true,
+      "created_at": "2026-10-11T15:00:00.000Z",
+      "updated_at": "2026-10-11T15:00:00.000Z",
+      "cat_photos": [
+        {
+          "id": "photo-otis-0",
+          "path": "https://cdn2.thecatapi.com/images/MTYxMzc1Nw.jpg",
+          "alt": "",
+          "position": 0
+        },
+        {
+          "id": "photo-otis-1",
+          "path": "https://cdn2.thecatapi.com/images/9pn.jpg",
+          "alt": "",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "breed": "Siamese mix",
+      "status": "available",
+      "special_needs": false,
+      "special_needs_notes": "",
+      "good_with_kids": "unknown",
+      "good_with_cats": "yes",
+      "good_with_dogs": "unknown",
+      "vaccinated": true,
+      "name": "Willow",
+      "sex": "female",
+      "birth_date": "2025-04-01",
+      "color": "Seal point Siamese",
+      "personality": [
+        "Shy at first",
+        "Affectionate",
+        "Talkative"
+      ],
+      "description": "Willow takes a few days to warm up, then she'll follow you from room to room and tell you all about her day.",
+      "adoption_fee": 200,
+      "id": "cat-willow",
+      "slug": "willow",
+      "spayed_neutered": true,
+      "microchipped": true,
+      "created_at": "2026-10-10T15:00:00.000Z",
+      "updated_at": "2026-10-10T15:00:00.000Z",
+      "cat_photos": [
+        {
+          "id": "photo-willow-0",
+          "path": "https://cdn2.thecatapi.com/images/13MkvUreZ.jpg",
+          "alt": "",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "breed": "Domestic shorthair",
+      "status": "available",
+      "special_needs": false,
+      "special_needs_notes": "",
+      "good_with_kids": "yes",
+      "good_with_cats": "yes",
+      "good_with_dogs": "unknown",
+      "vaccinated": true,
+      "name": "Marmalade",
+      "sex": "male",
+      "birth_date": "2021-08-15",
+      "color": "Orange & white",
+      "personality": [
+        "Easy-going",
+        "Food motivated"
+      ],
+      "description": "Marmalade is a classic couch cat who has never met a snack he didn't like.",
+      "adoption_fee": 150,
+      "id": "cat-marmalade",
+      "slug": "marmalade",
+      "spayed_neutered": true,
+      "microchipped": true,
+      "created_at": "2026-10-09T15:00:00.000Z",
+      "updated_at": "2026-10-09T15:00:00.000Z",
+      "cat_photos": [
+        {
+          "id": "photo-marmalade-0",
+          "path": "https://cdn2.thecatapi.com/images/dno.jpg",
+          "alt": "",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "breed": "Domestic shorthair",
+      "status": "available",
+      "special_needs": false,
+      "special_needs_notes": "",
+      "good_with_kids": "unknown",
+      "good_with_cats": "yes",
+      "good_with_dogs": "unknown",
+      "vaccinated": true,
+      "name": "Clover",
+      "sex": "female",
+      "birth_date": "2015-09-01",
+      "color": "Grey & white",
+      "personality": [
+        "Calm",
+        "Lap cat"
+      ],
+      "description": "Clover is a dignified senior looking for a quiet home and a warm blanket.",
+      "adoption_fee": 75,
+      "id": "cat-clover",
+      "slug": "clover",
+      "spayed_neutered": true,
+      "microchipped": true,
+      "created_at": "2026-10-08T15:00:00.000Z",
+      "updated_at": "2026-10-08T15:00:00.000Z",
+      "cat_photos": [
+        {
+          "id": "photo-clover-0",
+          "path": "https://cdn2.thecatapi.com/images/b5v.jpg",
+          "alt": "",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "breed": "Domestic shorthair",
+      "status": "available",
+      "special_needs": false,
+      "special_needs_notes": "",
+      "good_with_kids": "unknown",
+      "good_with_cats": "yes",
+      "good_with_dogs": "unknown",
+      "vaccinated": true,
+      "name": "Gus",
+      "sex": "male",
+      "birth_date": "2013-06-10",
+      "color": "Black & white",
+      "personality": [
+        "Sweet",
+        "Talkative"
+      ],
+      "description": "Gus is a gentle old gentleman who still enjoys a good chin scratch.",
+      "adoption_fee": 75,
+      "id": "cat-gus",
+      "slug": "gus",
+      "spayed_neutered": true,
+      "microchipped": true,
+      "created_at": "2026-10-07T15:00:00.000Z",
+      "updated_at": "2026-10-07T15:00:00.000Z",
+      "cat_photos": [
+        {
+          "id": "photo-gus-0",
+          "path": "https://cdn2.thecatapi.com/images/bep.jpg",
+          "alt": "",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "breed": "Domestic shorthair",
+      "status": "available",
+      "special_needs": true,
+      "special_needs_notes": "Pip is deaf. He does best as an indoor-only cat and responds well to hand signals and vibrations.",
+      "good_with_kids": "unknown",
+      "good_with_cats": "yes",
+      "good_with_dogs": "unknown",
+      "vaccinated": true,
+      "name": "Pip",
+      "sex": "male",
+      "birth_date": "2023-10-01",
+      "color": "Blue-grey",
+      "personality": [
+        "Bold",
+        "Playful"
+      ],
+      "description": "Pip doesn't let deafness slow him down. He's fearless and full of fun.",
+      "adoption_fee": 150,
+      "id": "cat-pip",
+      "slug": "pip",
+      "spayed_neutered": true,
+      "microchipped": true,
+      "created_at": "2026-10-06T15:00:00.000Z",
+      "updated_at": "2026-10-06T15:00:00.000Z",
+      "cat_photos": [
+        {
+          "id": "photo-pip-0",
+          "path": "https://cdn2.thecatapi.com/images/SpioNJPsd.jpg",
+          "alt": "",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "breed": "Domestic shorthair",
+      "status": "available",
+      "special_needs": true,
+      "special_needs_notes": "Rosie has diabetes, managed with twice-daily insulin. We'll teach you everything.",
+      "good_with_kids": "unknown",
+      "good_with_cats": "yes",
+      "good_with_dogs": "unknown",
+      "vaccinated": true,
+      "name": "Rosie",
+      "sex": "female",
+      "birth_date": "2020-10-01",
+      "color": "Brown tabby",
+      "personality": [
+        "Loving",
+        "Gentle"
+      ],
+      "description": "Rosie is a sweet, easy-going girl who just needs a family comfortable with a little routine.",
+      "adoption_fee": 100,
+      "id": "cat-rosie",
+      "slug": "rosie",
+      "spayed_neutered": true,
+      "microchipped": true,
+      "created_at": "2026-10-05T15:00:00.000Z",
+      "updated_at": "2026-10-05T15:00:00.000Z",
+      "cat_photos": [
+        {
+          "id": "photo-rosie-0",
+          "path": "https://cdn2.thecatapi.com/images/buq.jpg",
+          "alt": "",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "breed": "Domestic longhair",
+      "status": "adopted",
+      "special_needs": false,
+      "special_needs_notes": "",
+      "good_with_kids": "unknown",
+      "good_with_cats": "yes",
+      "good_with_dogs": "unknown",
+      "vaccinated": true,
+      "name": "Luna",
+      "sex": "female",
+      "birth_date": "2022-05-01",
+      "color": "Black longhair",
+      "personality": [
+        "Regal",
+        "Gentle"
+      ],
+      "description": "Luna is a fluffy, regal girl who loves being brushed.",
+      "adoption_fee": 150,
+      "id": "cat-luna",
+      "slug": "luna",
+      "spayed_neutered": true,
+      "microchipped": true,
+      "created_at": "2026-10-04T15:00:00.000Z",
+      "updated_at": "2026-10-04T15:00:00.000Z",
+      "cat_photos": [
+        {
+          "id": "photo-luna-0",
+          "path": "https://cdn2.thecatapi.com/images/MTkzOTA4OQ.jpg",
+          "alt": "",
+          "position": 0
+        }
+      ]
+    }
+  ],
+  "applications": [
+    {
+      "id": "app-morgan",
+      "type": "adopt",
+      "cat_id": "cat-juniper",
+      "status": "new",
+      "name": "Morgan Lee",
+      "email": "morgan@example.com",
+      "phone": "306-555-0142",
+      "city": "Moose Jaw",
+      "answers": {
+        "home_type": "House",
+        "own_or_rent": "Own",
+        "household": "Two adults, no kids",
+        "other_pets": "One 6-year-old spayed female cat, vaccinated",
+        "indoor_only": "Yes, indoor only",
+        "hours_alone": "4–8",
+        "experience": "I've had cats my whole life.",
+        "vet": "Moose Jaw Animal Hospital",
+        "why": "Juniper's independent streak sounds just like our current cat, and they'd keep each other company."
+      },
+      "admin_notes": "",
+      "decided_at": null,
+      "created_at": "2026-10-13T21:12:00.000Z",
+      "updated_at": "2026-10-13T21:12:00.000Z"
+    },
+    {
+      "id": "app-sam",
+      "type": "adopt",
+      "cat_id": "cat-otis",
+      "status": "meet_scheduled",
+      "name": "Sam Patel",
+      "email": "sam@example.com",
+      "phone": "306-555-0187",
+      "city": "Regina",
+      "answers": {
+        "home_type": "House",
+        "own_or_rent": "Rent",
+        "landlord_ok": "Yes",
+        "household": "Two adults and a 7-year-old",
+        "other_pets": "A calm 4-year-old Labrador",
+        "indoor_only": "Indoor with a catio or supervised outdoor time",
+        "hours_alone": "Less than 4",
+        "experience": "Grew up with cats; our last cat lived to 17.",
+        "vet": "",
+        "why": "Otis being good with dogs is exactly what we need."
+      },
+      "admin_notes": "Lovely on the phone. Landlord letter received.",
+      "decided_at": null,
+      "created_at": "2026-10-10T16:40:00.000Z",
+      "updated_at": "2026-10-11T18:00:00.000Z"
+    },
+    {
+      "id": "app-taylor",
+      "type": "foster",
+      "cat_id": null,
+      "status": "new",
+      "name": "Taylor Brooks",
+      "email": "taylor@example.com",
+      "phone": "306-555-0119",
+      "city": "Moose Jaw",
+      "answers": {
+        "home_type": "Apartment",
+        "own_or_rent": "Rent",
+        "landlord_ok": "Yes",
+        "household": "Just me",
+        "other_pets": "",
+        "space": "A spare room",
+        "can_foster": [
+          "Kittens",
+          "Bottle babies"
+        ],
+        "duration": "1–3 months",
+        "meds": "Willing to learn",
+        "transport": "Yes",
+        "notes": "I work from home, so I'm around for feeding schedules."
+      },
+      "admin_notes": "",
+      "decided_at": null,
+      "created_at": "2026-10-12T14:05:00.000Z",
+      "updated_at": "2026-10-12T14:05:00.000Z"
+    },
+    {
+      "id": "app-chris",
+      "type": "adopt",
+      "cat_id": "cat-luna",
+      "status": "approved",
+      "name": "Chris Nguyen",
+      "email": "chris@example.com",
+      "phone": "306-555-0164",
+      "city": "Moose Jaw",
+      "answers": {
+        "home_type": "Condo / townhouse",
+        "own_or_rent": "Own",
+        "household": "One adult",
+        "other_pets": "",
+        "indoor_only": "Yes, indoor only",
+        "hours_alone": "4–8",
+        "experience": "First cat of my own, but I've cat-sat for friends for years.",
+        "vet": "",
+        "why": "Luna's calm personality suits my quiet home."
+      },
+      "admin_notes": "",
+      "decided_at": "2026-09-28T17:00:00.000Z",
+      "created_at": "2026-09-20T19:30:00.000Z",
+      "updated_at": "2026-09-28T17:00:00.000Z"
+    }
+  ],
+  "meetings": [
+    {
+      "id": "meet-sam",
+      "application_id": "app-sam",
+      "starts_at": "2026-10-20T00:00:00.000Z",
+      "duration_minutes": 60,
+      "location": "Foster home, Moose Jaw (address sent by text)",
+      "notes": "Bring the dog's vaccination records.",
+      "status": "scheduled",
+      "created_at": "2026-10-11T18:00:00.000Z"
+    }
+  ],
+  "adoptions": [
+    {
+      "id": "adopt-luna",
+      "cat_id": "cat-luna",
+      "application_id": "app-chris",
+      "adopted_on": "2026-10-01",
+      "adopter_name": "Chris Nguyen",
+      "adopter_email": "chris@example.com",
+      "adopter_phone": "306-555-0164",
+      "adopter_address": "Moose Jaw",
+      "fee_paid": 150,
+      "microchip_number": "985112009876543",
+      "follow_up_on": "2026-10-15",
+      "notes": "Contract signed. Sent home with a week of food.",
+      "created_at": "2026-10-01T20:00:00.000Z"
+    }
+  ]
+}

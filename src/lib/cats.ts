@@ -47,7 +47,7 @@ export function ageCategory(months: number): Exclude<CatCategory, "special"> {
 }
 
 export function photoUrl(path: string) {
-  if (/^https?:\/\//.test(path)) return path;
+  if (/^(https?:|data:)/.test(path)) return path;
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   return `${base}/storage/v1/object/public/cat-photos/${path}`;
 }

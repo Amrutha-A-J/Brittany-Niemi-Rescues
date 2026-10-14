@@ -1,3 +1,5 @@
+import { DemoLogin } from "@/components/demo/DemoAdmin";
+import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { AuthCard } from "@/components/admin/AuthCard";
 import { ActionForm, SubmitButton } from "@/components/admin/Forms";
@@ -8,6 +10,7 @@ export const metadata = { title: "Log in" };
 
 export default async function LoginPage({ searchParams }: PageProps<"/admin/login">) {
   const { next, error } = await searchParams;
+  if (isDemo) return <DemoLogin next={typeof next === "string" ? next : undefined} />;
 
   if (!isSupabaseConfigured) {
     return (
