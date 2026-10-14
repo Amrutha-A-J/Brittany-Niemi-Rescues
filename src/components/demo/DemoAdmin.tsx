@@ -37,6 +37,7 @@ import { AdoptionForm, type ApplicantOption } from "../admin/AdoptionForm";
 import { ApplicationActions } from "../admin/ApplicationActions";
 import { AuthCard } from "../admin/AuthCard";
 import { CatForm } from "../admin/CatForm";
+import { FilterableCatList } from "../admin/FilterableCatList";
 import { ActionForm, SubmitButton } from "../admin/Forms";
 import { MeetingList } from "../admin/MeetingList";
 import { ApplicationStatusBadge, Card, CatRow, Empty, PageHeader, rowButton, rowDangerButton, Thumb } from "../admin/ui";
@@ -380,9 +381,11 @@ export const DemoCats = suspended(function DemoCats() {
       {cats.length === 0 ? (
         <Empty>No cats listed yet. Add your first one!</Empty>
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
-          {cats.map((c) => (
-            <CatRow key={c.id} cat={c} href={links.cat(c.id)}>
+        <FilterableCatList
+          items={cats.map((c) => ({
+            cat: c,
+            row: (
+            <CatRow cat={c} href={links.cat(c.id)}>
               <Link href={links.cat(c.id)} className={rowButton}>
                 Edit
               </Link>
@@ -399,8 +402,9 @@ export const DemoCats = suspended(function DemoCats() {
                 Delete
               </button>
             </CatRow>
-          ))}
-        </ul>
+            ),
+          }))}
+        />
       )}
     </>
   );

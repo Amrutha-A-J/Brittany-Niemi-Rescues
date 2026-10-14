@@ -7,6 +7,7 @@ import { requireStaff } from "@/lib/admin/session";
 import { CAT_SELECT } from "@/lib/data";
 import { toCatView } from "@/lib/cats";
 import type { Cat } from "@/lib/types";
+import { FilterableCatList } from "@/components/admin/FilterableCatList";
 import { ConfirmSubmit } from "@/components/admin/Forms";
 
 export const metadata = { title: "Cats" };
@@ -41,9 +42,11 @@ export default async function AdminCatsPage({ searchParams }: PageProps<"/admin/
       {cats.length === 0 ? (
         <Empty>No cats listed yet. Add your first one!</Empty>
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
-          {cats.map(({ view: c }) => (
-            <CatRow key={c.id} cat={c} href={`/admin/cats/${c.id}`}>
+        <FilterableCatList
+          items={cats.map(({ view: c }) => ({
+            cat: c,
+            row: (
+            <CatRow cat={c} href={`/admin/cats/${c.id}`}>
               <Link href={`/admin/cats/${c.id}`} className={rowButton}>
                 Edit
               </Link>
@@ -62,8 +65,9 @@ export default async function AdminCatsPage({ searchParams }: PageProps<"/admin/
                 </ConfirmSubmit>
               </form>
             </CatRow>
-          ))}
-        </ul>
+            ),
+          }))}
+        />
       )}
     </>
   );

@@ -84,7 +84,7 @@ export function Thumb({ url, alt = "", size = 48 }: { url?: string; alt?: string
  */
 export function CatRow({ cat, href, children }: { cat: CatView; href: string; children: React.ReactNode }) {
   return (
-    <li className="flex gap-4 px-4 py-4 sm:px-5">
+    <div className="flex gap-4 px-4 py-4 sm:px-5">
       <Link href={href} className="shrink-0" tabIndex={-1} aria-hidden>
         <Thumb url={cat.photos[0]?.url} size={72} />
       </Link>
@@ -100,7 +100,7 @@ export function CatRow({ cat, href, children }: { cat: CatView; href: string; ch
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">{children}</div>
       </div>
-    </li>
+    </div>
   );
 }
 
