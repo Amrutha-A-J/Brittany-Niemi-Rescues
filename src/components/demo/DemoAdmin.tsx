@@ -39,7 +39,7 @@ import { AuthCard } from "../admin/AuthCard";
 import { CatForm } from "../admin/CatForm";
 import { ActionForm, SubmitButton } from "../admin/Forms";
 import { MeetingList } from "../admin/MeetingList";
-import { ApplicationStatusBadge, Card, CatStatusBadge, Empty, PageHeader, Thumb } from "../admin/ui";
+import { ApplicationStatusBadge, Card, CatRow, Empty, PageHeader, rowButton, rowDangerButton, Thumb } from "../admin/ui";
 import { Logo } from "../site/Logo";
 import { links } from "@/lib/links";
 
@@ -382,40 +382,23 @@ export const DemoCats = suspended(function DemoCats() {
       ) : (
         <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
           {cats.map((c) => (
-            <li key={c.id} className="flex flex-wrap items-center gap-4 px-4 py-3 sm:flex-nowrap sm:px-5">
-              <Thumb url={c.photos[0]?.url} size={56} />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <Link href={links.cat(c.id)} className="font-serif text-xl hover:underline">
-                    {c.name}
-                  </Link>
-                  <CatStatusBadge status={c.status} />
-                </div>
-                <p className="truncate text-xs text-muted">
-                  {catSummary(c)} · {c.photos.length} {c.photos.length === 1 ? "photo" : "photos"}
-                </p>
-              </div>
-              <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-                <button
-                  className="btn-ghost px-3 py-1.5 text-xs"
-                  onClick={() => setCatStatus(c.id, c.status === "pending" ? "available" : "pending")}
-                >
-                  {c.status === "pending" ? "Mark available" : "Mark pending"}
-                </button>
-                <Link href={links.adoptCat(c.id)} className="btn-ghost px-3 py-1.5 text-xs">
-                  Mark adopted
-                </Link>
-                <Link href={links.cat(c.id)} className="btn-outline px-3 py-1.5 text-xs">
-                  Edit
-                </Link>
-                <button
-                  className="btn-ghost px-3 py-1.5 text-xs text-danger"
-                  onClick={() => window.confirm(`Delete ${c.name} and all photos? This can't be undone.`) && deleteCat(c.id)}
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
+            <CatRow key={c.id} cat={c} href={links.cat(c.id)}>
+              <Link href={links.cat(c.id)} className={rowButton}>
+                Edit
+              </Link>
+              <button className={rowButton} onClick={() => setCatStatus(c.id, c.status === "pending" ? "available" : "pending")}>
+                {c.status === "pending" ? "Mark available" : "Mark pending"}
+              </button>
+              <Link href={links.adoptCat(c.id)} className={rowButton}>
+                Mark adopted
+              </Link>
+              <button
+                className={rowDangerButton}
+                onClick={() => window.confirm(`Delete ${c.name} and all photos? This can't be undone.`) && deleteCat(c.id)}
+              >
+                Delete
+              </button>
+            </CatRow>
           ))}
         </ul>
       )}
