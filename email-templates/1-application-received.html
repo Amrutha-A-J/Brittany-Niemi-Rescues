@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<body style="margin:0;background:#f6f6f6;padding:24px 12px;font-family:-apple-system,Segoe UI,Inter,Arial,sans-serif;color:#111;font-size:15px;line-height:1.55">
+<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:14px;padding:32px 28px">
+<p style="font-family:Georgia,'Times New Roman',serif;font-size:20px;margin:0 0 24px">Brittany Niemi Rescues</p>
+<p style="margin:0 0 14px">Hi {{ params.first_name }},</p>
+{% if params.type == "adoption" %}
+<p style="margin:0 0 14px">Thank you for your application{% if params.cat_names %} to adopt <strong>{{ params.cat_names }}</strong>{% endif %}! We read every one personally and will be in touch within a few days.</p>
+{% else %}
+<p style="margin:0 0 14px">Thank you for offering to foster{% if params.cat_names %} <strong>{{ params.cat_names }}</strong>{% endif %}! We read every application personally and will be in touch within a few days.</p>
+{% endif %}
+<p style="margin:0 0 14px">In the meantime, you can follow our cats on Instagram at <a href="https://www.instagram.com/brittany.niemi.rescues/" style="color:#111">@brittany.niemi.rescues</a>.</p>
+<p style="margin:0 0 14px">With purrs,<br>Brittany Niemi Rescues</p>
+</div>
+<p style="text-align:center;color:#888;font-size:12px;margin:16px 0 0">Brittany Niemi Rescues · Regina, SK</p>
+</body>
+</html>
