@@ -964,11 +964,11 @@ export function DemoAccount() {
   );
 }
 
-export function DemoSiteText() {
+export function DemoSettings() {
   return (
     <>
-      <PageHeader title="Website text" description="The words at the top of the home page." />
-      <Card title="Home page" className="max-w-md">
+      <PageHeader title="Website settings" description="Change the wording on the website." />
+      <Card title="Home page hero" className="max-w-md">
         <p className="text-sm text-muted">
           In the real site, you can change the home page headline and intro here. That isn&apos;t switched on in this
           demo.

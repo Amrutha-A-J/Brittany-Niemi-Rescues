@@ -36,7 +36,7 @@ export default async function HomePage() {
           alternateName: site.shortName,
           url: site.url,
           logo: `${site.url}/icon-512.png`,
-          image: `${site.url}/opengraph-image`,
+          image: `${site.url}/opengraph-image.png`,
           description: site.description,
           areaServed: `${site.city}, ${site.region}`,
           address: {

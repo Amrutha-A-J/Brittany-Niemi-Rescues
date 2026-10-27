@@ -1,4 +1,4 @@
-import { DemoSiteText } from "@/components/demo/DemoAdmin";
+import { DemoSettings } from "@/components/demo/DemoAdmin";
 import { isDemo } from "@/lib/demo/config";
 import { ActionForm, SubmitButton } from "@/components/admin/Forms";
 import { Card, PageHeader } from "@/components/admin/ui";
@@ -6,16 +6,16 @@ import { saveSiteText } from "@/lib/admin/site-text-actions";
 import { requireStaff } from "@/lib/admin/session";
 import { getSiteText, siteTextDefaults } from "@/lib/site-text";
 
-export const metadata = { title: "Website text" };
+export const metadata = { title: "Website settings" };
 
-export default async function SiteTextPage() {
-  if (isDemo) return <DemoSiteText />;
+export default async function SettingsPage() {
+  if (isDemo) return <DemoSettings />;
   await requireStaff();
   const text = await getSiteText();
   return (
     <>
-      <PageHeader title="Website text" description="The words at the top of the home page." />
-      <Card title="Home page" className="max-w-2xl">
+      <PageHeader title="Website settings" description="Change the wording on the website." />
+      <Card title="Home page hero" className="max-w-2xl">
         <ActionForm action={saveSiteText}>
           <label className="block">
             <span className="field-label">Headline</span>

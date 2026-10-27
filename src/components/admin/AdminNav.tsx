@@ -11,7 +11,7 @@ const items = [
   { href: "/admin/fosters", label: "Fosters" },
   { href: "/admin/meetings", label: "Meet & greets" },
   { href: "/admin/adopted", label: "Adopted" },
-  { href: "/admin/site-text", label: "Website text" },
+  { href: "/admin/settings", label: "Website settings" },
   { href: "/admin/account", label: "Account" },
 ];
 
