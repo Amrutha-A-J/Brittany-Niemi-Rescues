@@ -2,6 +2,7 @@ import Link from "next/link";
 import { APPLICATION_TABS, applicationListMeta } from "@/lib/admin/application-tabs";
 import { requireStaff } from "@/lib/admin/session";
 import { formatDate } from "@/lib/calendar";
+import { all, nested, toApplication } from "@/lib/db";
 import type { Application, ApplicationType } from "@/lib/types";
 import { ApplicationStatusBadge, Empty, PageHeader } from "./ui";
 
@@ -20,18 +21,24 @@ export async function ApplicationsList({
   const catId = type === "adopt" && typeof sp.cat === "string" ? sp.cat : "";
   const meta = applicationListMeta[type];
 
-  const { supabase } = await requireStaff();
-  let query = supabase.from("applications").select("*, cats(id, name)").eq("type", type).order("created_at", { ascending: false });
-  if (status !== "all") query = query.eq("status", status);
-  if (catId) query = query.eq("cat_id", catId);
-
-  const [{ data }, { data: counts }, { data: cats }] = await Promise.all([
-    query,
-    supabase.from("applications").select("status").eq("type", type),
-    type === "adopt" ? supabase.from("cats").select("id, name").order("name") : Promise.resolve({ data: [] }),
+  await requireStaff();
+  const [data, counts, cats] = await Promise.all([
+    all(
+      `select a.*, json(case when c.id is null then null else json_object('id', c.id, 'name', c.name) end) as cats
+       from applications a left join cats c on c.id = a.cat_id
+       where a.type = ? and (? = 'all' or a.status = ?) and (? = '' or a.cat_id = ?)
+       order by a.created_at desc`,
+      type,
+      status,
+      status,
+      catId,
+      catId,
+    ),
+    all<{ status: string }>("select status from applications where type = ?", type),
+    type === "adopt" ? all<{ id: string; name: string }>("select id, name from cats order by name") : Promise.resolve([]),
   ]);
-  const rows = (data ?? []) as Row[];
-  const countBy = (s: string) => (counts ?? []).filter((c) => s === "all" || c.status === s).length;
+  const rows: Row[] = data.map((r) => ({ ...toApplication(r), cats: nested<{ id: string; name: string }>(r.cats) }));
+  const countBy = (s: string) => counts.filter((c) => s === "all" || c.status === s).length;
 
   const href = (patch: Record<string, string>) => {
     const p = new URLSearchParams({ status, cat: catId, ...patch });
@@ -58,7 +65,7 @@ export async function ApplicationsList({
             <span className="field-label">Cat</span>
             <select name="cat" defaultValue={catId} className="field py-2">
               <option value="">Any cat</option>
-              {(cats ?? []).map((c) => (
+              {cats.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>

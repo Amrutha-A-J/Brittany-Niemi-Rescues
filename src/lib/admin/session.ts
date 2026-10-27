@@ -1,24 +1,20 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { currentUser } from "./auth";
 
-/** Returns a Supabase client acting as the logged-in staff member, or redirects to login. */
+/** Returns the logged-in staff member, or redirects to login. */
 export const requireStaff = cache(async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await currentUser();
   if (!user) redirect("/admin/login");
-  const { data: staff } = await supabase.from("staff").select("user_id").eq("user_id", user.id).maybeSingle();
-  return { supabase, user, isStaff: Boolean(staff) };
+  return { user };
 });
 
-/** For server actions: throws instead of rendering if the caller isn't staff. */
-export async function staffClient() {
-  const { supabase, isStaff } = await requireStaff();
-  if (!isStaff) throw new Error("Not authorised");
-  return supabase;
+/** For server actions and routes: throws instead of redirecting if the caller isn't logged in. */
+export async function assertStaff() {
+  const user = await currentUser();
+  if (!user) throw new Error("Not authorised");
+  return user;
 }
 
 export function safeNext(next: unknown, fallback = "/admin") {

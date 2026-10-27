@@ -1,0 +1,49 @@
+# Deploys the real site to Cloudflare Workers on every push to master: applies new
+# database migrations, then builds and uploads the Worker.
+#
+# It does nothing until it's set up (see SETUP.md, step 3). One time, in the GitHub repo:
+#   Settings → Secrets and variables → Actions → Secrets:   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+#   Settings → Secrets and variables → Actions → Variables: SITE_URL (e.g. https://brittanyniemirescues.ca)
+name: Deploy (Cloudflare)
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - name: Check setup
+        id: setup
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::notice::Cloudflare isn't set up yet (no CLOUDFLARE_API_TOKEN secret), so nothing was deployed."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.setup.outputs.ready == 'true'
+        uses: actions/checkout@v4
+      - if: steps.setup.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - if: steps.setup.outputs.ready == 'true'
+        run: npm ci
+      - if: steps.setup.outputs.ready == 'true'
+        name: Apply database migrations
+        run: npm run db:migrate:remote
+      - if: steps.setup.outputs.ready == 'true'
+        name: Build and deploy
+        run: npm run deploy

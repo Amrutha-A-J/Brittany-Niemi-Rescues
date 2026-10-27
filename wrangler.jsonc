@@ -1,0 +1,57 @@
+// Cloudflare Workers config. Setup steps are in SETUP.md.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "brittany-niemi-rescues",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "brittany-niemi-rescues" }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "brittany-niemi-rescues",
+      // From `npx wrangler d1 create brittany-niemi-rescues`
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    },
+    {
+      // Same database, used by OpenNext to track which cached pages are out of date
+      "binding": "NEXT_TAG_CACHE_D1",
+      "database_name": "brittany-niemi-rescues",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "brittany-niemi-rescues-photos" }],
+  // Cache for public pages (they refresh every 5 minutes, and right away when a cat is edited)
+  "kv_namespaces": [
+    {
+      "binding": "NEXT_INC_CACHE_KV",
+      // From `npx wrangler kv namespace create cache`
+      "id": "00000000000000000000000000000000"
+    }
+  ],
+  "observability": { "enabled": true },
+  "env": {
+    // Used only while building for deploy, so public pages are pre-rendered from the live database.
+    "build": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "brittany-niemi-rescues",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "migrations",
+          "remote": true
+        },
+        {
+          "binding": "NEXT_TAG_CACHE_D1",
+          "database_name": "brittany-niemi-rescues",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "remote": true
+        }
+      ],
+      "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "brittany-niemi-rescues-photos" }],
+      "kv_namespaces": [{ "binding": "NEXT_INC_CACHE_KV", "id": "00000000000000000000000000000000" }]
+    }
+  }
+}

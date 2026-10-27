@@ -2,7 +2,7 @@
 
 /**
  * Admin screens for demo mode. They reuse the real admin components but read and
- * write the browser-only demo store instead of Supabase.
+ * write the browser-only demo store instead of the database.
  */
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";

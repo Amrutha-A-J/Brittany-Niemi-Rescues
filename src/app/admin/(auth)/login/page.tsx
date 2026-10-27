@@ -1,10 +1,11 @@
 import { DemoLogin } from "@/components/demo/DemoAdmin";
 import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/admin/AuthCard";
 import { ActionForm, SubmitButton } from "@/components/admin/Forms";
 import { login } from "@/lib/admin/auth-actions";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { currentUser } from "@/lib/admin/auth";
 
 export const metadata = { title: "Log in" };
 
@@ -12,16 +13,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/admin/logi
   if (isDemo) return <DemoLogin />;
   const { next, error } = await searchParams;
 
-  if (!isSupabaseConfigured) {
-    return (
-      <AuthCard title="Almost there">
-        <p className="text-sm leading-relaxed text-muted">
-          The rescue login switches on once the site is connected to Supabase. Follow the steps in{" "}
-          <code className="rounded bg-card px-1">SETUP.md</code>, then come back here.
-        </p>
-      </AuthCard>
-    );
-  }
+  if (await currentUser()) redirect("/admin");
 
   return (
     <AuthCard title="Rescue login">

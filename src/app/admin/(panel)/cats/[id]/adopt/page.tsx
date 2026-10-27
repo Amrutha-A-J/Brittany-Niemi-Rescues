@@ -5,6 +5,7 @@ import { AdoptionForm } from "@/components/admin/AdoptionForm";
 import { PageHeader } from "@/components/admin/ui";
 import { applicantOptions } from "@/lib/admin/applicants";
 import { requireStaff } from "@/lib/admin/session";
+import { first } from "@/lib/db";
 
 export const metadata = { title: "Mark as adopted" };
 
@@ -17,8 +18,11 @@ export default async function AdoptCatPage({ params, searchParams }: PageProps<"
   const { id } = await params;
   if (isDemo) return <DemoAdoptCat id={id} />;
   const { application } = await searchParams;
-  const { supabase } = await requireStaff();
-  const { data: cat } = await supabase.from("cats").select("id, name, status, adoption_fee").eq("id", id).maybeSingle();
+  await requireStaff();
+  const cat = await first<{ id: string; name: string; status: string; adoption_fee: number | null }>(
+    "select id, name, status, adoption_fee from cats where id = ?",
+    id,
+  );
   if (!cat) notFound();
   if (cat.status === "adopted") redirect(`/admin/adopted/${cat.id}`);
 
@@ -33,7 +37,7 @@ export default async function AdoptCatPage({ params, searchParams }: PageProps<"
         <AdoptionForm
           catId={cat.id}
           catName={cat.name}
-          applicants={await applicantOptions(supabase, cat.id)}
+          applicants={await applicantOptions(cat.id)}
           defaultApplication={typeof application === "string" ? application : undefined}
           defaultFee={cat.adoption_fee}
           isNew

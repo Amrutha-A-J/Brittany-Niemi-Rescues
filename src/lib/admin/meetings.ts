@@ -2,8 +2,6 @@ import { googleCalendarUrl } from "@/lib/calendar";
 import { site } from "@/lib/site";
 import type { Meeting } from "@/lib/types";
 
-export const MEETING_SELECT = "*, applications(id, name, email, phone, type, status, cats(name, slug))";
-
 export type MeetingRow = Meeting & {
   applications: {
     id: string;

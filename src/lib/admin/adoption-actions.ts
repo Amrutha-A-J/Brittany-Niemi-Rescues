@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { FormState } from "./auth-actions";
-import { staffClient } from "./session";
+import { first, newId, nowIso, run } from "@/lib/db";
+import { assertStaff } from "./session";
 
 const text = (fd: FormData, name: string) => String(fd.get(name) ?? "").trim();
 const dateOrNull = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
@@ -18,7 +19,7 @@ function revalidateCat(slug?: string) {
 
 /** Creates or updates the adoption record and marks the cat as adopted. */
 export async function saveAdoption(_prev: FormState, fd: FormData): Promise<FormState> {
-  const supabase = await staffClient();
+  await assertStaff();
   const catId = text(fd, "cat_id");
   const adopterName = text(fd, "adopter_name");
   if (!adopterName) return { error: "Add the adopter's name." };
@@ -38,23 +39,19 @@ export async function saveAdoption(_prev: FormState, fd: FormData): Promise<Form
     follow_up_on: dateOrNull(text(fd, "follow_up_on")),
     notes: text(fd, "notes"),
   };
-  const { error } = await supabase.from("adoptions").upsert(record, { onConflict: "cat_id" });
-  if (error) return { error: error.message };
+  const cols = Object.keys(record);
+  await run(
+    `insert into adoptions (id, ${cols.join(", ")}) values (?, ${cols.map(() => "?").join(", ")})
+     on conflict (cat_id) do update set ${cols.map((c) => `${c} = excluded.${c}`).join(", ")}`,
+    newId(),
+    ...Object.values(record),
+  );
 
-  const { data: cat, error: catError } = await supabase
-    .from("cats")
-    .update({ status: "adopted" })
-    .eq("id", catId)
-    .select("slug")
-    .single();
-  if (catError) return { error: catError.message };
+  const cat = await first<{ slug: string }>("update cats set status = 'adopted' where id = ? returning slug", catId);
+  if (!cat) return { error: "That cat no longer exists." };
 
   if (applicationId) {
-    await supabase
-      .from("applications")
-      .update({ status: "approved", decided_at: new Date().toISOString() })
-      .eq("id", applicationId)
-      .neq("status", "approved");
+    await run("update applications set status = 'approved', decided_at = ? where id = ? and status != 'approved'", nowIso(), applicationId);
   }
 
   revalidateCat(cat.slug);
@@ -64,10 +61,10 @@ export async function saveAdoption(_prev: FormState, fd: FormData): Promise<Form
 
 /** Undo an adoption: removes the record and lists the cat again. */
 export async function returnToAvailable(fd: FormData) {
-  const supabase = await staffClient();
+  await assertStaff();
   const catId = text(fd, "cat_id");
-  await supabase.from("adoptions").delete().eq("cat_id", catId);
-  const { data: cat } = await supabase.from("cats").update({ status: "available" }).eq("id", catId).select("slug").single();
+  await run("delete from adoptions where cat_id = ?", catId);
+  const cat = await first<{ slug: string }>("update cats set status = 'available' where id = ? returning slug", catId);
   revalidateCat(cat?.slug);
   redirect(`/admin/cats/${catId}`);
 }

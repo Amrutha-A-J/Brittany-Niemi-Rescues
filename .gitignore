@@ -45,3 +45,8 @@ next-env.d.ts
 /.next-demo/
 /.next-pages/
 /.pages-stash/
+
+# cloudflare
+/.open-next/
+/.wrangler/
+.dev.vars*

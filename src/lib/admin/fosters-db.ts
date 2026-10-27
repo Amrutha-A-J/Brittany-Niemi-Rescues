@@ -1,5 +1,5 @@
 import "server-only";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { first, insertSql, newId, run } from "@/lib/db";
 
 type AppForFoster = {
   id: string;
@@ -11,26 +11,28 @@ type AppForFoster = {
 };
 
 /** Adds an approved foster applicant to the roster, or links them to an existing record with the same email. */
-export async function ensureFosterFromApplication(supabase: SupabaseClient, app: AppForFoster) {
-  const { data: existing } = await supabase.from("fosters").select("id, application_id").ilike("email", app.email).maybeSingle();
+export async function ensureFosterFromApplication(app: AppForFoster) {
+  const existing = await first<{ id: string; application_id: string | null }>(
+    "select id, application_id from fosters where lower(email) = lower(?)",
+    app.email,
+  );
   if (existing) {
-    if (!existing.application_id) await supabase.from("fosters").update({ application_id: app.id }).eq("id", existing.id);
-    return existing.id as string;
+    if (!existing.application_id) await run("update fosters set application_id = ? where id = ?", app.id, existing.id);
+    return existing.id;
   }
   const canFoster = app.answers.can_foster;
-  const { data, error } = await supabase
-    .from("fosters")
-    .insert({
+  const id = newId();
+  await run(
+    ...insertSql("fosters", {
+      id,
       application_id: app.id,
       name: app.name,
       email: app.email,
       phone: app.phone,
       city: app.city,
-      can_foster: Array.isArray(canFoster) ? canFoster : [],
+      can_foster: JSON.stringify(Array.isArray(canFoster) ? canFoster : []),
       notes: typeof app.answers.preferences === "string" ? app.answers.preferences : "",
-    })
-    .select("id")
-    .single();
-  if (error) throw new Error(error.message);
-  return data.id as string;
+    }),
+  );
+  return id;
 }

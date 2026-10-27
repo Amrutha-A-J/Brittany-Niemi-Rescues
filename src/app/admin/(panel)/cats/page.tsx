@@ -4,9 +4,8 @@ import Link from "next/link";
 import { CatRow, Empty, PageHeader, rowButton, rowDangerButton } from "@/components/admin/ui";
 import { deleteCat, setCatStatus } from "@/lib/admin/cat-actions";
 import { requireStaff } from "@/lib/admin/session";
-import { CAT_SELECT } from "@/lib/data";
+import { CAT_SQL, all, toCat } from "@/lib/db";
 import { toCatView } from "@/lib/cats";
-import type { Cat } from "@/lib/types";
 import { FilterableCatList } from "@/components/admin/FilterableCatList";
 import { ConfirmSubmit } from "@/components/admin/Forms";
 
@@ -15,13 +14,9 @@ export const metadata = { title: "Cats" };
 export default async function AdminCatsPage({ searchParams }: PageProps<"/admin/cats">) {
   if (isDemo) return <DemoCats />;
   const { saved } = await searchParams;
-  const { supabase } = await requireStaff();
-  const { data } = await supabase
-    .from("cats")
-    .select(CAT_SELECT)
-    .in("status", ["available", "pending"])
-    .order("created_at", { ascending: false });
-  const cats = ((data ?? []) as Cat[]).map((c) => ({ raw: c, view: toCatView(c) }));
+  await requireStaff();
+  const data = await all(`${CAT_SQL} where c.status in ('available', 'pending') order by c.created_at desc`);
+  const cats = data.map(toCat).map((c) => ({ raw: c, view: toCatView(c) }));
 
   return (
     <>

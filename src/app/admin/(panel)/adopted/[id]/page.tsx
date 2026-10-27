@@ -8,9 +8,8 @@ import { Card, PageHeader, Thumb } from "@/components/admin/ui";
 import { returnToAvailable } from "@/lib/admin/adoption-actions";
 import { applicantOptions } from "@/lib/admin/applicants";
 import { requireStaff } from "@/lib/admin/session";
-import { CAT_SELECT } from "@/lib/data";
+import { CAT_SQL, first, toAdoption, toCat } from "@/lib/db";
 import { catSummary, toCatView } from "@/lib/cats";
-import type { Adoption, Cat } from "@/lib/types";
 
 export const metadata = { title: "Adoption record" };
 
@@ -22,14 +21,14 @@ export async function generateStaticParams() {
 export default async function AdoptedCatPage({ params }: PageProps<"/admin/adopted/[id]">) {
   const { id } = await params;
   if (isDemo) return <DemoAdoptedCat id={id} />;
-  const { supabase } = await requireStaff();
-  const [{ data: catRow }, { data: record }] = await Promise.all([
-    supabase.from("cats").select(CAT_SELECT).eq("id", id).maybeSingle(),
-    supabase.from("adoptions").select("*").eq("cat_id", id).maybeSingle(),
+  await requireStaff();
+  const [catRow, record] = await Promise.all([
+    first(`${CAT_SQL} where c.id = ?`, id),
+    first("select * from adoptions where cat_id = ?", id),
   ]);
   if (!catRow) notFound();
-  const cat = toCatView(catRow as Cat);
-  const adoption = record as Adoption | null;
+  const cat = toCatView(toCat(catRow));
+  const adoption = record && toAdoption(record);
 
   return (
     <>
@@ -49,7 +48,7 @@ export default async function AdoptedCatPage({ params }: PageProps<"/admin/adopt
             catId={cat.id}
             catName={cat.name}
             record={adoption}
-            applicants={await applicantOptions(supabase, cat.id)}
+            applicants={await applicantOptions(cat.id)}
             defaultFee={cat.adoption_fee}
             isNew={false}
           />

@@ -4,8 +4,7 @@ import { parseApplication, looksLikeSpam } from "./application-validate";
 import { applicationTypeLabel } from "./forms";
 import { button, emailLayout, escapeHtml, rescueInbox, sendEmail } from "./email";
 import { site } from "./site";
-import { createPublicClient } from "./supabase/public";
-import { isSupabaseConfigured } from "./supabase/config";
+import { first, insertSql, newId, run } from "./db";
 import type { ApplicationType } from "./types";
 
 export type ApplyState = {
@@ -19,33 +18,28 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
 
   if (looksLikeSpam(formData)) return { ok: true }; // pretend success so bots don't retry
 
-  if (!isSupabaseConfigured) {
-    return { error: "Applications aren't switched on yet. Please message us on Instagram in the meantime." };
-  }
-
   const { contact, answers, catSlug, fieldErrors } = parseApplication(type, formData);
 
-  const supabase = createPublicClient();
-  let cat: { id: string; name: string } | null = null;
-  if (catSlug) {
-    const { data } = await supabase.from("cats").select("id, name").eq("slug", catSlug).maybeSingle();
-    cat = data;
-  }
+  const cat = catSlug ? await first<{ id: string; name: string }>("select id, name from cats where slug = ?", catSlug) : null;
 
   if (Object.keys(fieldErrors).length) {
     return { error: "Please check the highlighted fields.", fieldErrors };
   }
 
-  const { error } = await supabase.from("applications").insert({
-    type,
-    cat_id: cat?.id ?? null,
-    name: contact.name,
-    email: contact.email,
-    phone: contact.phone,
-    city: contact.city,
-    answers,
-  });
-  if (error) {
+  try {
+    await run(
+      ...insertSql("applications", {
+        id: newId(),
+        type,
+        cat_id: cat?.id ?? null,
+        name: contact.name,
+        email: contact.email,
+        phone: contact.phone,
+        city: contact.city,
+        answers: JSON.stringify(answers),
+      }),
+    );
+  } catch (error) {
     console.error("[application insert failed]", error);
     return { error: "Something went wrong sending your application. Please try again." };
   }

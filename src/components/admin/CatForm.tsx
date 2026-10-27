@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { saveCat, type CatInput } from "@/lib/admin/cat-actions";
 import { ageInMonths, formatAge, photoUrl } from "@/lib/cats";
-import { createClient } from "@/lib/supabase/browser";
 import type { Cat, YesNoUnknown } from "@/lib/types";
 import { links } from "@/lib/links";
 
@@ -37,21 +36,20 @@ type CatFormProps = {
   cat?: Cat;
   /** Defaults to the real server action. */
   onSave?: (input: CatInput) => Promise<{ error?: string; id?: string }>;
-  /** Stores a processed photo and returns its path. Defaults to Supabase Storage. */
+  /** Stores a processed photo and returns its path. Defaults to the site's photo storage (R2). */
   upload?: (blob: Blob, path: string) => Promise<string>;
   /** Longest photo edge in px (demo mode uses smaller photos to fit browser storage). */
   maxEdge?: number;
 };
 
-async function uploadToSupabase(blob: Blob, path: string) {
-  const { error } = await createClient()
-    .storage.from("cat-photos")
-    .upload(path, blob, { contentType: "image/webp", cacheControl: "31536000" });
-  if (error) throw error;
-  return path;
+async function uploadToStorage(blob: Blob, path: string) {
+  const res = await fetch(`/admin/upload?path=${encodeURIComponent(path)}`, { method: "POST", body: blob });
+  const data = (await res.json().catch(() => ({}))) as { path?: string; error?: string };
+  if (!res.ok || !data.path) throw new Error(data.error ?? "upload failed");
+  return data.path;
 }
 
-export function CatForm({ cat, onSave = saveCat, upload = uploadToSupabase, maxEdge = MAX_EDGE }: CatFormProps) {
+export function CatForm({ cat, onSave = saveCat, upload = uploadToStorage, maxEdge = MAX_EDGE }: CatFormProps) {
   const router = useRouter();
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState<string | null>(null);

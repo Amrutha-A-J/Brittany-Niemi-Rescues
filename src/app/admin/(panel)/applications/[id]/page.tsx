@@ -7,12 +7,12 @@ import { ActionForm, ConfirmSubmit, SubmitButton } from "@/components/admin/Form
 import { ServerMeetingList as MeetingList } from "@/components/admin/ServerMeetingList";
 import { ApplicationStatusBadge, Card, PageHeader } from "@/components/admin/ui";
 import { deleteApplication, reopenApplication, saveNotes } from "@/lib/admin/application-actions";
-import { MEETING_SELECT, type MeetingRow } from "@/lib/admin/meetings";
+import type { MeetingRow } from "@/lib/admin/meetings";
 import { requireStaff } from "@/lib/admin/session";
 import { formatDate, toLocalInputValue } from "@/lib/calendar";
+import { MEETING_SQL, all, first, nested, toApplication, toMeeting } from "@/lib/db";
 import { applicationListMeta } from "@/lib/admin/application-tabs";
 import { applicationFields, applicationTypeLabel } from "@/lib/forms";
-import type { Application } from "@/lib/types";
 import { nowMs } from "@/lib/time";
 
 export const metadata = { title: "Application" };
@@ -25,13 +25,18 @@ export async function generateStaticParams() {
 export default async function ApplicationPage({ params }: PageProps<"/admin/applications/[id]">) {
   const { id } = await params;
   if (isDemo) return <DemoApplication id={id} />;
-  const { supabase } = await requireStaff();
-  const [{ data }, { data: meetings }] = await Promise.all([
-    supabase.from("applications").select("*, cats(id, name, slug, status)").eq("id", id).maybeSingle(),
-    supabase.from("meetings").select(MEETING_SELECT).eq("application_id", id).order("starts_at", { ascending: false }),
+  await requireStaff();
+  const [data, meetingRows] = await Promise.all([
+    first(
+      `select a.*, json(case when c.id is null then null else json_object('id', c.id, 'name', c.name, 'slug', c.slug, 'status', c.status) end) as cats
+       from applications a left join cats c on c.id = a.cat_id where a.id = ?`,
+      id,
+    ),
+    all(`${MEETING_SQL} where m.application_id = ? order by m.starts_at desc`, id),
   ]);
   if (!data) notFound();
-  const app = data as Application & { cats: { id: string; name: string; slug: string; status: string } | null };
+  const app = { ...toApplication(data), cats: nested<{ id: string; name: string; slug: string; status: string }>(data.cats) };
+  const meetings = meetingRows.map(toMeeting) as MeetingRow[];
 
   // Default meet & greet: two days from now at 6pm.
   const d = new Date(nowMs() + 2 * 86_400_000);
@@ -76,7 +81,7 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
 
           {meetings && meetings.length > 0 && (
             <Card title="Meet & greets">
-              <MeetingList meetings={meetings as MeetingRow[]} showApplicant={false} />
+              <MeetingList meetings={meetings} showApplicant={false} />
             </Card>
           )}
 

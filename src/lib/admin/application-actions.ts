@@ -4,26 +4,26 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { googleCalendarUrl, icsFile, parseLocalDateTime, formatDateTime } from "@/lib/calendar";
 import { button, emailLayout, escapeHtml, rescueInbox, sendEmail, textToHtml } from "@/lib/email";
+import { first, insertSql, newId, nested, nowIso, run, toApplication } from "@/lib/db";
 import { site } from "@/lib/site";
 import type { FormState } from "./auth-actions";
 import { ensureFosterFromApplication } from "./fosters-db";
-import { staffClient } from "./session";
+import { assertStaff } from "./session";
 
 const on = (fd: FormData, name: string) => fd.get(name) === "on";
 const text = (fd: FormData, name: string) => String(fd.get(name) ?? "").trim();
 
 async function loadApplication(id: string) {
-  const supabase = await staffClient();
-  const { data, error } = await supabase
-    .from("applications")
-    .select("id, type, status, name, email, phone, city, answers, cat_id, cats(id, name, slug, status)")
-    .eq("id", id)
-    .single();
-  if (error) throw new Error(error.message);
-  const cat = (Array.isArray(data.cats) ? data.cats[0] : data.cats) as
-    | { id: string; name: string; slug: string; status: string }
-    | null;
-  return { supabase, app: data, cat };
+  await assertStaff();
+  const row = await first(
+    `select a.id, a.type, a.status, a.name, a.email, a.phone, a.city, a.answers, a.cat_id,
+       json(case when c.id is null then null else json_object('id', c.id, 'name', c.name, 'slug', c.slug, 'status', c.status) end) as cat
+     from applications a left join cats c on c.id = a.cat_id where a.id = ?`,
+    id,
+  );
+  if (!row) throw new Error("Application not found");
+  const cat = nested<{ id: string; name: string; slug: string; status: string }>(row.cat);
+  return { app: toApplication(row), cat };
 }
 
 function refresh(id?: string) {
@@ -32,24 +32,19 @@ function refresh(id?: string) {
 }
 
 export async function saveNotes(_prev: FormState, fd: FormData): Promise<FormState> {
-  const supabase = await staffClient();
-  const { error } = await supabase.from("applications").update({ admin_notes: text(fd, "notes") }).eq("id", text(fd, "id"));
-  if (error) return { error: error.message };
+  await assertStaff();
+  await run("update applications set admin_notes = ? where id = ?", text(fd, "notes"), text(fd, "id"));
   refresh(text(fd, "id"));
   return { message: "Notes saved." };
 }
 
 export async function approveApplication(_prev: FormState, fd: FormData): Promise<FormState> {
   const id = text(fd, "id");
-  const { supabase, app, cat } = await loadApplication(id);
-  const { error } = await supabase
-    .from("applications")
-    .update({ status: "approved", decided_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) return { error: error.message };
+  const { app, cat } = await loadApplication(id);
+  await run("update applications set status = 'approved', decided_at = ? where id = ?", nowIso(), id);
 
   if (cat && on(fd, "mark_pending") && cat.status === "available") {
-    await supabase.from("cats").update({ status: "pending" }).eq("id", cat.id);
+    await run("update cats set status = 'pending' where id = ?", cat.id);
     revalidatePath("/");
     revalidatePath("/adopt");
     revalidatePath(`/cats/${cat.slug}`);
@@ -57,7 +52,7 @@ export async function approveApplication(_prev: FormState, fd: FormData): Promis
 
   let fosterNote = "";
   if (app.type === "foster" && on(fd, "add_to_fosters")) {
-    await ensureFosterFromApplication(supabase, app);
+    await ensureFosterFromApplication(app);
     revalidatePath("/admin/fosters");
     fosterNote = " Added to Fosters.";
   }
@@ -79,12 +74,8 @@ export async function approveApplication(_prev: FormState, fd: FormData): Promis
 
 export async function rejectApplication(_prev: FormState, fd: FormData): Promise<FormState> {
   const id = text(fd, "id");
-  const { supabase, app } = await loadApplication(id);
-  const { error } = await supabase
-    .from("applications")
-    .update({ status: "rejected", decided_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) return { error: error.message };
+  const { app } = await loadApplication(id);
+  await run("update applications set status = 'rejected', decided_at = ? where id = ?", nowIso(), id);
 
   let emailNote = "";
   if (on(fd, "send_email")) {
@@ -103,15 +94,15 @@ export async function rejectApplication(_prev: FormState, fd: FormData): Promise
 }
 
 export async function reopenApplication(fd: FormData) {
-  const supabase = await staffClient();
+  await assertStaff();
   const id = text(fd, "id");
-  await supabase.from("applications").update({ status: "new", decided_at: null }).eq("id", id);
+  await run("update applications set status = 'new', decided_at = null where id = ?", id);
   refresh(id);
 }
 
 export async function deleteApplication(fd: FormData) {
-  const supabase = await staffClient();
-  const { data } = await supabase.from("applications").delete().eq("id", text(fd, "id")).select("type").single();
+  await assertStaff();
+  const data = await first<{ type: string }>("delete from applications where id = ? returning type", text(fd, "id"));
   refresh();
   redirect(data?.type === "foster" ? "/admin/applications/foster" : "/admin/applications/adopt");
 }
@@ -125,15 +116,13 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
   const location = text(fd, "location");
   const notes = text(fd, "notes");
 
-  const { supabase, app, cat } = await loadApplication(id);
-  const { data: meeting, error } = await supabase
-    .from("meetings")
-    .insert({ application_id: id, starts_at: start.toISOString(), duration_minutes: minutes, location, notes })
-    .select("id")
-    .single();
-  if (error) return { error: error.message };
+  const { app, cat } = await loadApplication(id);
+  const meeting = { id: newId() };
+  await run(
+    ...insertSql("meetings", { id: meeting.id, application_id: id, starts_at: start.toISOString(), duration_minutes: minutes, location, notes }),
+  );
   if (app.status === "new") {
-    await supabase.from("applications").update({ status: "meet_scheduled" }).eq("id", id);
+    await run("update applications set status = 'meet_scheduled' where id = ?", id);
   }
 
   const who = cat ? cat.name : app.type === "foster" ? "our foster team" : "our cats";
@@ -187,10 +176,10 @@ ${notes ? textToHtml(notes) : ""}
 }
 
 export async function setMeetingStatus(fd: FormData) {
-  const supabase = await staffClient();
+  await assertStaff();
   const status = text(fd, "status");
   if (!["scheduled", "completed", "cancelled"].includes(status)) return;
-  await supabase.from("meetings").update({ status }).eq("id", text(fd, "id"));
+  await run("update meetings set status = ? where id = ?", status, text(fd, "id"));
   refresh(text(fd, "application_id") || undefined);
   revalidatePath("/admin/meetings");
 }

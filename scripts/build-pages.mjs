@@ -4,7 +4,7 @@
  *   NEXT_BASE_PATH=/Brittany-Niemi-Rescues node scripts/build-pages.mjs
  *
  * Static sites can't run server code, so during the build:
- *  - server-only files (login proxy, calendar download route, auth email links) are set aside;
+ *  - server-only files (login proxy, photo routes, calendar download, password reset links) are set aside;
  *  - each server-actions file ("use server") is replaced by a stand-in with the same exports
  *    that just throws. Demo mode never calls them; it uses the browser-only demo store instead.
  * Everything is put back afterwards, so the regular build is unaffected.
@@ -16,6 +16,8 @@ import { dirname, join } from "node:path";
 const SERVER_ONLY = [
   "src/proxy.ts",
   "src/app/auth/confirm/route.ts",
+  "src/app/admin/upload/route.ts",
+  "src/app/photos/[...path]/route.ts",
   "src/app/admin/(panel)/meetings/[id]/ics/route.ts",
 ];
 const stash = ".pages-stash";
@@ -77,8 +79,6 @@ try {
       NEXT_EXPORT: "1",
       // With a static export, Next writes the finished site into the build folder.
       NEXT_DIST_DIR: "out",
-      NEXT_PUBLIC_SUPABASE_URL: "",
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: "",
     },
   });
   status = res.status ?? 1;

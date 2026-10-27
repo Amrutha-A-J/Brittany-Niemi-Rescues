@@ -8,20 +8,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:new": "node scripts/db.mjs new",
-    "db:migrate": "node scripts/db.mjs migrate",
-    "db:reset": "supabase db reset && node --env-file=.env.local scripts/seed-demo.mts",
-    "db:status": "node scripts/db.mjs status",
-    "db:push": "node scripts/db.mjs push",
-    "db:seed": "node --env-file=.env.local scripts/seed-demo.mts",
-    "db:seed:demo": "node --env-file=.env.demo scripts/seed-demo.mts",
     "build:demo": "NEXT_PUBLIC_DEMO=1 next build",
-    "build:pages": "node scripts/build-pages.mjs"
+    "build:pages": "node scripts/build-pages.mjs",
+    "db:new": "wrangler d1 migrations create DB",
+    "db:migrate": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "db:seed": "node scripts/d1.mjs seed",
+    "staff:add": "node scripts/d1.mjs staff",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "NEXT_DEV_WRANGLER_ENV=build opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types cloudflare-env.d.ts --env-interface CloudflareEnv --env-file .env.example"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.12.7",
-    "@supabase/supabase-js": "^2.117.3",
-    "next": "16.4.0",
+    "@opennextjs/cloudflare": "^1.20.13",
+    "next": "^16.4.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1"
@@ -32,9 +32,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.4.0",
-    "supabase": "^2.121.0",
+    "eslint-config-next": "^16.4.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.153.0"
   }
 }

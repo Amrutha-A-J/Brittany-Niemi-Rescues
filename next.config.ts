@@ -1,7 +1,5 @@
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import type { NextConfig } from "next";
-
-// Local Supabase serves photos from 127.0.0.1, which the image optimizer refuses to fetch.
-const localSupabase = /^http:\/\/(127\.0\.0\.1|localhost)/.test(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "");
 
 // GitHub Pages demo: a fully static build of demo mode (see scripts/build-pages.mjs).
 const staticExport = process.env.NEXT_EXPORT === "1";
@@ -20,19 +18,9 @@ const nextConfig: NextConfig = {
   // Classic caching model: public pages use ISR (`revalidate`) and admin
   // mutations call revalidatePath(). Simpler than Cache Components for this app.
   cacheComponents: false,
-  images: {
-    qualities: [75],
-    unoptimized: localSupabase || staticExport,
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "*.supabase.co",
-        pathname: "/storage/v1/object/public/**",
-      },
-      // Sample cat photos used by demo mode
-      { protocol: "https", hostname: "cdn2.thecatapi.com", pathname: "/images/**" },
-    ],
-  },
+  // Photos are resized in the browser before upload. Next's image optimizer would
+  // need Cloudflare Images, which isn't free past its monthly allowance.
+  images: { unoptimized: true },
   turbopack: {
     rules: {
       "*.css": {
@@ -44,3 +32,6 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+// Gives `next dev` the local D1 database and R2 bucket from wrangler.jsonc.
+if (!staticExport) initOpenNextCloudflareForDev();

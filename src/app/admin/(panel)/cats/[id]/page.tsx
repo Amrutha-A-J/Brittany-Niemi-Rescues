@@ -5,8 +5,7 @@ import { notFound } from "next/navigation";
 import { CatForm } from "@/components/admin/CatForm";
 import { PageHeader } from "@/components/admin/ui";
 import { requireStaff } from "@/lib/admin/session";
-import { CAT_SELECT } from "@/lib/data";
-import type { Cat } from "@/lib/types";
+import { CAT_SQL, first, toCat } from "@/lib/db";
 
 export const metadata = { title: "Edit cat" };
 
@@ -18,10 +17,10 @@ export async function generateStaticParams() {
 export default async function EditCatPage({ params }: PageProps<"/admin/cats/[id]">) {
   const { id } = await params;
   if (isDemo) return <DemoCatEditor id={id} />;
-  const { supabase } = await requireStaff();
-  const { data } = await supabase.from("cats").select(CAT_SELECT).eq("id", id).maybeSingle();
+  await requireStaff();
+  const data = await first(`${CAT_SQL} where c.id = ?`, id);
   if (!data) notFound();
-  const cat = data as Cat;
+  const cat = toCat(data);
 
   return (
     <>

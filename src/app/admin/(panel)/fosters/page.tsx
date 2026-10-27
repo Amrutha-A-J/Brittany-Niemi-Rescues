@@ -3,8 +3,8 @@ import { DemoFosters } from "@/components/demo/DemoFosters";
 import { FosterList } from "@/components/admin/Fosters";
 import { PageHeader } from "@/components/admin/ui";
 import { requireStaff } from "@/lib/admin/session";
+import { FOSTER_SQL, all, toFoster } from "@/lib/db";
 import { isDemo } from "@/lib/demo/config";
-import type { FosterWithPlacements } from "@/lib/types";
 
 export const metadata = { title: "Fosters" };
 
@@ -22,12 +22,12 @@ const fostersHeader = (
 
 export default async function FostersPage() {
   if (isDemo) return <DemoFosters />;
-  const { supabase } = await requireStaff();
-  const { data } = await supabase.from("fosters").select("*, foster_placements(*)").order("name");
+  await requireStaff();
+  const data = await all(`${FOSTER_SQL} order by f.name`);
   return (
     <>
       {fostersHeader}
-      <FosterList fosters={(data ?? []) as FosterWithPlacements[]} />
+      <FosterList fosters={data.map(toFoster)} />
     </>
   );
 }

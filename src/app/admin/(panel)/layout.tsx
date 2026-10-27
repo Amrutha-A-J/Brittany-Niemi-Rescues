@@ -5,29 +5,16 @@ import { AdminNav } from "@/components/admin/AdminNav";
 import { Logo } from "@/components/site/Logo";
 import { logout } from "@/lib/admin/auth-actions";
 import { requireStaff } from "@/lib/admin/session";
+import { all } from "@/lib/db";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   if (isDemo) return <DemoPanel>{children}</DemoPanel>;
-  const { supabase, user, isStaff } = await requireStaff();
+  const { user } = await requireStaff();
 
-  if (!isStaff) {
-    return (
-      <div className="mx-auto max-w-md px-5 py-24 text-center">
-        <h1 className="font-serif text-3xl">No access yet</h1>
-        <p className="mt-3 text-sm text-muted">
-          You&apos;re logged in as {user.email}, but this account hasn&apos;t been added as rescue staff. See step 3 in SETUP.md.
-        </p>
-        <form action={logout} className="mt-6">
-          <button className="btn-outline">Log out</button>
-        </form>
-      </div>
-    );
-  }
-
-  const { data: fresh } = await supabase.from("applications").select("type").eq("status", "new");
+  const fresh = await all<{ type: string }>("select type from applications where status = 'new'");
   const newCounts = {
-    adopt: (fresh ?? []).filter((a) => a.type === "adopt").length,
-    foster: (fresh ?? []).filter((a) => a.type === "foster").length,
+    adopt: fresh.filter((a) => a.type === "adopt").length,
+    foster: fresh.filter((a) => a.type === "foster").length,
   };
 
   return (

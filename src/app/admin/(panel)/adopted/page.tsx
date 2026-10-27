@@ -5,6 +5,7 @@ import { Empty, PageHeader, Thumb } from "@/components/admin/ui";
 import { requireStaff } from "@/lib/admin/session";
 import { formatDate } from "@/lib/calendar";
 import { photoUrl } from "@/lib/cats";
+import { all, nested } from "@/lib/db";
 import type { Adoption } from "@/lib/types";
 
 export const metadata = { title: "Adopted" };
@@ -14,21 +15,27 @@ type Row = {
   name: string;
   color: string;
   cat_photos: { path: string; position: number }[];
-  adoptions: Adoption | Adoption[] | null;
+  adoption: Adoption | null;
 };
 
 export default async function AdoptedPage({ searchParams }: PageProps<"/admin/adopted">) {
   if (isDemo) return <DemoAdopted />;
   const { q } = await searchParams;
   const search = typeof q === "string" ? q.trim().toLowerCase() : "";
-  const { supabase } = await requireStaff();
-  const { data } = await supabase
-    .from("cats")
-    .select("id, name, color, cat_photos(path, position), adoptions(*)")
-    .eq("status", "adopted");
+  await requireStaff();
+  const data = await all(
+    `select c.id, c.name, c.color,
+       (select json_group_array(json_object('path', p.path, 'position', p.position)) from cat_photos p where p.cat_id = c.id) as cat_photos,
+       (select json_object('id', d.id, 'cat_id', d.cat_id, 'application_id', d.application_id, 'adopted_on', d.adopted_on,
+          'adopter_name', d.adopter_name, 'adopter_email', d.adopter_email, 'adopter_phone', d.adopter_phone,
+          'adopter_address', d.adopter_address, 'fee_paid', d.fee_paid, 'microchip_number', d.microchip_number,
+          'follow_up_on', d.follow_up_on, 'notes', d.notes, 'created_at', d.created_at)
+        from adoptions d where d.cat_id = c.id) as adoption
+     from cats c where c.status = 'adopted'`,
+  );
 
-  const rows = ((data ?? []) as Row[])
-    .map((c) => ({ ...c, adoption: Array.isArray(c.adoptions) ? c.adoptions[0] : c.adoptions }))
+  const rows = data
+    .map((c): Row => ({ ...(c as Row), cat_photos: nested(c.cat_photos) ?? [], adoption: nested(c.adoption) }))
     .filter(
       (c) =>
         !search ||

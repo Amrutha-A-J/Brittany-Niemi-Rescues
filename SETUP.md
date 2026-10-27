@@ -1,9 +1,30 @@
 # Brittany Niemi Rescues: setup guide
 
-The website is a Next.js app (`web/`) backed by Supabase (database, logins, photo storage) and Brevo (email).
+The website is a Next.js app (`web/`) that runs on Cloudflare's free plan:
 
+- **Cloudflare Workers** runs the site (via [OpenNext](https://opennext.js.org/cloudflare))
+- **D1** is the database (cats, applications, meet & greets, adoptions, fosters, logins)
+- **R2** stores the cat photos
+- **KV** caches the public pages
+- **Brevo** sends email
+
+Pages:
 - **Public site:** `/` (homepage), `/adopt` (all cats with filters), `/cats/<name>` (one page per cat), `/apply`, `/foster`
-- **Rescue admin:** `/admin` (cats, applications, meet & greets, adopted, account)
+- **Rescue admin:** `/admin` (cats, applications, fosters, meet & greets, adopted, account)
+
+### What it costs
+
+The hosting costs **$0/month** at this site's size. These are the free limits that matter:
+
+| | Free allowance | This site |
+|---|---|---|
+| Workers | 100,000 requests/day, 3 MiB Worker | a few hundred requests/day, ~2.3 MiB Worker |
+| D1 database | 5 GB, 5M rows read/day | a few MB |
+| R2 photos | 10 GB, no download fees | ~300 KB per photo |
+| Brevo | 300 emails/day | a handful |
+
+The only fixed cost is the yearly domain renewal. If the site ever outgrows the free plan, Workers Paid is $5/month.
+Turning on R2 asks for a card on file, even though usage stays free.
 
 ---
 
@@ -15,149 +36,125 @@ For design reviews, the site runs entirely in the browser with no database:
 npm run dev:demo        # http://localhost:3001
 ```
 
-- Sample data comes from `src/lib/demo/seed.json` (cats, applications, a meet & greet, an adoption). Photos are from TheCatAPI.
+- Sample data comes from `src/lib/demo/seed.json`. Photos are from TheCatAPI.
 - Admin login: **brittany / catsrule** (set in `seed.json`). This isn't real security; demo data only.
-- Everything works: adding cats and photos, applying, approving, scheduling, adopting. Changes are saved in that
-  visitor's own browser only. "Reset demo data" in the admin sidebar starts over.
-- A banner marks it as a preview, and it's hidden from Google.
-- To deploy the demo on Vercel, set the environment variable `NEXT_PUBLIC_DEMO=1` and nothing else.
-
-Turning demo mode off (no `NEXT_PUBLIC_DEMO`) switches back to the real Supabase backend described below.
+- Everything works, and changes are saved in that visitor's own browser only. "Reset demo data" in the admin sidebar starts over.
+- `.github/workflows/pages.yml` publishes this demo to GitHub Pages on every push to `master`.
 
 ---
 
-## 1. Run everything on your Mac
+## 1. Run the real site on your Mac
 
-You need [Homebrew](https://brew.sh) and Node 20+. Docker runs through Colima, which is free and needs no admin password.
+You need Node 20+. There's nothing else to install: Wrangler (Cloudflare's CLI, a dev dependency) keeps a local
+database and photo bucket in `.wrangler/state`.
 
 ```bash
-brew install colima docker   # one time
-colima start                 # once after each restart of your Mac
 cd web
 npm install
-npx supabase start           # starts the local database, auth and storage (first run downloads ~2 GB)
+npm run db:migrate                          # create the tables in the local database
+npm run db:seed                             # optional: load the sample cats, applications and fosters
+npm run staff:add -- you@example.com        # create a login (asks for a password)
+npm run dev                                 # http://localhost:3000, admin at /admin
 ```
 
-`supabase start` prints an **API URL**, an **anon key** and a **service_role key**. Put them in `web/.env.local`:
-
-```
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
-SUPABASE_SERVICE_ROLE_KEY=<service_role key>
-```
-
-Create the demo login and the 10 sample cats, then start the site:
-
-```bash
-npm run db:seed
-npm run dev
-```
-
-- Website: http://localhost:3000
-- Admin: http://localhost:3000/admin. The demo login is `demo@brittanyniemirescues.test` / `catsrule`.
-- Supabase Studio, to look at the data: http://127.0.0.1:54323
-- Password-reset emails: locally these never leave your Mac. Read them at http://127.0.0.1:54324 (Mailpit).
-- Without Brevo keys, the app's own emails (application confirmations, invites) are printed in the terminal instead of sent.
-
-Stop everything with `npx supabase stop` and `colima stop`. Your data is kept.
+- Without Brevo keys in `.env.local`, emails aren't sent. The admin says so when it would have sent one.
+- `npm run preview` builds the real Cloudflare Worker and runs it locally on http://localhost:8787, the closest thing to production.
 
 ---
 
 ## Database changes (migrations)
 
-Every change to the database structure is a SQL file in `supabase/migrations/`, applied in date order.
-Each database records which files it has already had, so you never run SQL by hand. Commands only apply what's new.
+Every change to the database structure is a SQL file in `migrations/`, applied in order. Each database records
+which files it has already had, so commands only apply what's new.
 
 | Command | What it does |
 |---|---|
 | `npm run db:new -- add_cat_weight` | Creates a new, empty migration file to write SQL in |
 | `npm run db:migrate` | Applies new migrations to your **local** database |
-| `npm run db:reset` | Wipes the local database, re-applies every migration and re-seeds the demo data |
-| `npm run db:status -- .env.demo` | Lists which migrations the online database has |
-| `npm run db:push -- .env.demo --dry-run` | Previews what would be applied online |
-| `npm run db:push -- .env.demo` | Applies new migrations to the online database |
+| `npm run db:migrate:remote` | Applies new migrations to the **live** database |
 
-**Automatic:** once the code is on GitHub, `.github/workflows/migrate.yml` runs `db:push` every time a migration file
-lands on `master`. Add one repository secret, `DATABASE_URL`, under Settings → Secrets and variables → Actions.
-When you move to Lightsail, swap that secret for the new database's URL; nothing else changes.
-
+The deploy workflow (step 3) runs `db:migrate:remote` automatically before every deploy.
 Rule of thumb: never edit a migration that has already been applied. Add a new one instead.
 
 ---
 
-## 2. Put a demo online for Brittany (free)
+## 2. Create the Cloudflare resources (one time)
 
-### 2a. Supabase (database)
-1. Create a free project at https://supabase.com. Choose the **Canada (Central)** region.
-2. Fill in `web/.env.demo` (the comments in that file say where each value is in the Supabase dashboard), then create the tables:
-   ```bash
-   npm run db:push -- .env.demo
-   ```
-3. **Authentication → Sign In / Providers**: turn **off** "Allow new users to sign up".
-4. **Authentication → URL Configuration**:
-   - Site URL: your Vercel URL, e.g. `https://brittany-niemi-rescues.vercel.app`
-   - Redirect URLs: add `https://brittany-niemi-rescues.vercel.app/**`
-5. Create the demo login and sample cats against the hosted project:
-   ```bash
-   npm run db:seed:demo
-   ```
-   To use a different login: `npm run db:seed:demo -- her@email.com SomePassword`.
+Do this in Brittany's Cloudflare account, the one that owns the domain.
 
-### 2b. Vercel (hosting)
-1. Push this project to GitHub, then **Import** it at https://vercel.com/new.
-2. Set **Root Directory** to `web`.
-3. Add these environment variables:
-   | Name | Value |
-   |---|---|
-   | `NEXT_PUBLIC_SITE_URL` | `https://<your-project>.vercel.app` |
-   | `NEXT_PUBLIC_SUPABASE_URL` | from step 2a |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | from step 2a |
-   | `NEXT_PUBLIC_NOINDEX` | `1`. This keeps the demo out of Google; remove it at launch. |
-4. Deploy. Never add the `service_role` key to Vercel; it's only for the seed script.
+```bash
+cd web
+npx wrangler login                                     # opens the browser to sign in
+npx wrangler d1 create brittany-niemi-rescues          # prints a database_id
+npx wrangler r2 bucket create brittany-niemi-rescues-photos
+npx wrangler kv namespace create cache                 # prints an id
+```
+
+1. In `wrangler.jsonc`, replace the placeholder ids: put the `database_id` in all four D1 entries,
+   and the KV `id` in both KV entries. Commit that change.
+2. Create the tables and her login in the live database:
+   ```bash
+   npm run db:migrate:remote
+   npm run staff:add -- her@email.com --remote
+   ```
+3. Add the email settings as Worker secrets (each command asks for the value):
+   ```bash
+   npx wrangler secret put BREVO_API_KEY
+   npx wrangler secret put EMAIL_FROM
+   npx wrangler secret put EMAIL_FROM_NAME
+   npx wrangler secret put RESCUE_NOTIFY_EMAIL
+   ```
+4. First deploy by hand: `NEXT_PUBLIC_SITE_URL=https://<her domain> npm run deploy`
+5. Cloudflare dashboard → **Workers & Pages → brittany-niemi-rescues → Settings → Domains & Routes → Add → Custom domain**,
+   and enter her domain. Cloudflare sets up DNS and HTTPS on its own, because the domain is already there.
 
 ---
 
-## 3. Email with Brevo (free, 300 emails/day)
+## 3. Deploy automatically from GitHub
+
+`.github/workflows/deploy.yml` applies new migrations and deploys on every push to `master`. It skips itself until these are set
+(GitHub repo → Settings → Secrets and variables → Actions):
+
+| Kind | Name | Value |
+|---|---|---|
+| Secret | `CLOUDFLARE_API_TOKEN` | Cloudflare → My Profile → API Tokens → Create Token → "Edit Cloudflare Workers" template, plus **Account → D1 → Edit** |
+| Secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → Workers & Pages → Account ID (right-hand side) |
+| Variable | `SITE_URL` | `https://<her domain>`, no trailing slash |
+
+---
+
+## 4. Email with Brevo (free, 300 emails/day)
 
 1. Sign up at https://brevo.com.
-2. **Senders, domains & dedicated IPs → Senders**: add and verify the address emails should come from.
-   Once you own a domain, authenticate the domain there too, so emails don't land in spam.
+2. **Senders, domains & dedicated IPs**: authenticate her domain (Brevo gives DNS records to add in Cloudflare → DNS),
+   then add the sender address, so emails don't land in spam.
 3. **SMTP & API → API keys**: create a key.
-4. Add these to `.env.local` and to Vercel:
-   ```
-   BREVO_API_KEY=...
-   EMAIL_FROM=the verified sender address
-   EMAIL_FROM_NAME=Brittany Niemi Rescues
-   RESCUE_NOTIFY_EMAIL=where new-application alerts should go
-   ```
-5. Send password-reset emails through Brevo too. In Supabase, go to **Authentication → Emails → SMTP Settings**, enable custom SMTP and enter:
-   host `smtp-relay.brevo.com`, port `587`, and the SMTP login and key from Brevo's **SMTP & API → SMTP** tab.
+4. Put the values in `.env.local` for local testing, and in the Worker secrets (step 2.3) for the live site.
 
 The app sends these emails:
 - To the applicant: confirmation of their application, approved, not a match (optional), and a meet & greet invite with an "Add to Google Calendar" button and an `.ics` file for Apple Calendar and Outlook
 - To the rescue: new application, and meet & greet booked
+- To staff: password reset links
 
 ---
 
-## 4. Password resets
+## 5. Logins and passwords
 
-- **Forgot it:** click "Forgot password?" on `/admin/login`. A link arrives by email, opens "Choose a new password", and logs her in.
-- **Change it:** while logged in, go to **Account → Change password**.
-- **Locked out completely:** in Supabase, go to **Authentication → Users**, find her account, and choose **Send password recovery**.
-- **Adding another volunteer:** in **Authentication → Users → Add user**, then run this in the SQL Editor:
-  ```sql
-  insert into public.staff (user_id) select id from auth.users where email = 'their@email.com';
-  ```
+- **Forgot it:** click "Forgot password?" on `/admin/login`. A one-hour link arrives by email, opens "Choose a new password", and logs her in.
+  (This needs Brevo set up.)
+- **Change it:** while logged in, go to **Account → Change password**. This also logs out every other device.
+- **Locked out completely, or adding a volunteer:** `npm run staff:add -- their@email.com --remote`.
+  Running it for an existing email sets a new password.
+- Logins last 30 days per browser. Passwords are stored as salted PBKDF2 hashes, never in plain text.
 
 ---
 
-## 5. Going live checklist
+## 6. Going live checklist
 
 - [ ] Replace the placeholder logo: put the file at `public/logo.png` (or `.svg`) and update `src/components/site/Logo.tsx`
-- [ ] Buy a domain and connect it in Vercel. Update `NEXT_PUBLIC_SITE_URL` and the Supabase URL settings.
-- [ ] Remove `NEXT_PUBLIC_NOINDEX`
-- [ ] Delete the sample cats and the demo login, then create her real login
+- [ ] Create the Cloudflare resources and deploy (steps 2–3)
+- [ ] Remove `NEXT_PUBLIC_NOINDEX` if it's set
+- [ ] Create her real login; don't load the sample data into the live database
 - [ ] Add the site in [Google Search Console](https://search.google.com/search-console) and submit `https://<domain>/sitemap.xml`
 - [ ] Create a free [Google Business Profile](https://business.google.com) for the rescue in Regina
 - [ ] Put the website link in the Instagram bio
