@@ -5,6 +5,10 @@ import { all } from "./db";
 const defaults = () => ({
   /** Where "new application" and "meet & greet booked" emails go. */
   notifyEmail: process.env.RESCUE_NOTIFY_EMAIL || process.env.EMAIL_FROM || "",
+  /** Pre-filled "Where" for a new meet & greet, e.g. "Brittany's home, north Regina". */
+  meetLocation: "",
+  /** Pre-filled map link for a new meet & greet (a Google Maps pin). */
+  meetMapUrl: "",
 });
 
 export type Settings = ReturnType<typeof defaults>;

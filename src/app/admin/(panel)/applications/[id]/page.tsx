@@ -15,6 +15,7 @@ import { APP_CATS_SQL, MEETING_SQL, all, appCats, first, toApplication, toMeetin
 import { namesList } from "@/lib/cats";
 import { applicationListMeta } from "@/lib/admin/application-tabs";
 import { applicationTypeLabel } from "@/lib/forms";
+import { getSettings } from "@/lib/settings";
 import { nowMs } from "@/lib/time";
 
 export const metadata = { title: "Application" };
@@ -30,12 +31,13 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
   const { id } = await params;
   if (isDemo) return <DemoApplication id={id} />;
   await requireStaff();
-  const [data, meetingRows] = await Promise.all([
+  const [data, meetingRows, settings] = await Promise.all([
     first(
       `select a.*, ${APP_CATS_SQL} from applications a where a.id = ?`,
       id,
     ),
     all(`${MEETING_SQL} where m.application_id = ? order by m.starts_at desc`, id),
+    getSettings(),
   ]);
   if (!data) notFound();
   const app = { ...toApplication(data), cats: appCats(data.cats) };
@@ -91,6 +93,8 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
               catAvailable={app.cats.some((c) => c.status === "available")}
               type={app.type}
               defaultWhen={defaultWhen}
+              defaultLocation={settings.meetLocation}
+              defaultMapUrl={settings.meetMapUrl}
             />
             {(app.status === "approved" || app.status === "rejected") && (
               <form action={reopenApplication} className="mt-4 border-t border-line pt-4">

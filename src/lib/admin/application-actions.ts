@@ -119,6 +119,10 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
   const start = parseLocalDateTime(when);
   const minutes = Math.min(240, Math.max(15, Number(fd.get("duration")) || 60));
   const location = text(fd, "location");
+  // A link typed as the place doubles as the map; otherwise search Maps for the place.
+  const mapUrl =
+    text(fd, "map_url") ||
+    (/^https?:\/\//.test(location) ? location : location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}` : "");
   const notes = text(fd, "notes");
 
   const { app, catNames } = await loadApplication(id);
@@ -132,7 +136,8 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
 
   const who = catNames || (app.type === "foster" ? "our foster team" : "our cats");
   const whenText = formatDateTime(start.toISOString());
-  const where = location || "Location to be confirmed";
+  const isLink = /^https?:\/\//.test(location);
+  const where = isLink ? "Tap “Open in Maps” for directions" : location || "Location to be confirmed";
   const ics = (e: Parameters<typeof icsFile>[0]) => [{ name: "meet-and-greet.ics", content: Buffer.from(icsFile(e)).toString("base64") }];
 
   // The applicant's calendar entry.
@@ -142,18 +147,21 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
     start,
     minutes,
     location,
-    description: `Meet & greet with ${site.name}${catNames ? ` to meet ${catNames}` : ""}.${notes ? `\n\n${notes}` : ""}`,
+    description: [`Meet & greet with ${site.name}${catNames ? ` to meet ${catNames}` : ""}.`, notes, mapUrl && `Map: ${mapUrl}`]
+      .filter(Boolean)
+      .join("\n\n"),
   };
   // The rescue's calendar entry, with the applicant's contact details.
   const booked = {
     ...invite,
     uid: `${meeting.id}-rescue`,
     title: `Meet & greet: ${app.name}${catNames ? ` + ${catNames}` : ""}`,
-    description: [`${app.name} · ${app.phone} · ${app.email}`, catNames && `Cats: ${catNames}`, notes, `${site.url}/admin/applications/${id}`]
+    description: [`${app.name} · ${app.phone} · ${app.email}`, catNames && `Cats: ${catNames}`, notes, mapUrl && `Map: ${mapUrl}`, `${site.url}/admin/applications/${id}`]
       .filter(Boolean)
       .join("\n"),
   };
-  const shared = { when: whenText, duration: `${minutes} minutes`, location: where, notes, cat_names: catNames };
+  const shared = { when: whenText, duration: `${minutes} minutes`, location: where, map_url: mapUrl, notes, cat_names: catNames };
+  const mapButton = mapUrl ? button(mapUrl, "Open in Maps") : "";
   const inbox = await rescueInbox();
 
   let emailNote = "";
@@ -175,6 +183,7 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
           `<p>Hi ${escapeHtml(app.name.split(" ")[0])},</p>
 <p>We'd love for you to meet ${escapeHtml(who)}! Here are the details:</p>
 <p><strong>${escapeHtml(whenText)}</strong> (${minutes} minutes)<br>${escapeHtml(where)}</p>
+${mapButton && `<p>${mapButton}</p>`}
 ${notes ? textToHtml(notes) : ""}
 <p>${button(googleCalendarUrl(invite), "Add to Google Calendar")}${button(outlookCalendarUrl(invite), "Add to Outlook")}</p>
 <p style="font-size:13px;color:#666">Using Apple Calendar? Open the attached <em>meet-and-greet.ics</em> file.</p>
@@ -206,6 +215,7 @@ ${notes ? textToHtml(notes) : ""}
         html: emailLayout(
           `<p>Meet & greet with <strong>${escapeHtml(app.name)}</strong>${catNames ? ` for ${escapeHtml(catNames)}` : ""}.</p>
 <p><strong>${escapeHtml(whenText)}</strong> (${minutes} minutes)<br>${escapeHtml(where)}</p>
+${mapButton && `<p>${mapButton}</p>`}
 <p>${escapeHtml(app.phone)}<br>${escapeHtml(app.email)}</p>
 ${notes ? textToHtml(notes) : ""}
 <p>${button(googleCalendarUrl(booked), "Add to Google Calendar")}${button(outlookCalendarUrl(booked), "Add to Outlook")}</p>

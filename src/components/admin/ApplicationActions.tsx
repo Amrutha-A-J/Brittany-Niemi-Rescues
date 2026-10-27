@@ -15,6 +15,9 @@ type Props = {
   catAvailable: boolean;
   type: "adopt" | "foster";
   defaultWhen: string;
+  /** Pre-filled place and map link (Admin → Account). */
+  defaultLocation?: string;
+  defaultMapUrl?: string;
   /** Defaults to the real server actions. */
   actions?: { approve: Action; reject: Action; schedule: Action };
 };
@@ -45,7 +48,7 @@ export function ApplicationActions(props: Props) {
   );
 }
 
-function MeetForm({ id, defaultWhen, actions = serverActions }: Props) {
+function MeetForm({ id, defaultWhen, defaultLocation = "", defaultMapUrl = "", actions = serverActions }: Props) {
   const [state, action] = useActionState<FormState, FormData>(actions.schedule, {});
   return (
     <form action={action} className="space-y-4 rounded-xl bg-card p-4" onReset={(e) => !state.ok && e.preventDefault()}>
@@ -67,7 +70,11 @@ function MeetForm({ id, defaultWhen, actions = serverActions }: Props) {
       </div>
       <label className="block">
         <span className="field-label">Where</span>
-        <input name="location" className="field" placeholder="Foster home address, or a video call link" />
+        <input name="location" className="field" defaultValue={defaultLocation} placeholder="Foster home address, or a video call link" />
+      </label>
+      <label className="block">
+        <span className="field-label">Map link (optional)</span>
+        <input type="url" name="map_url" className="field" defaultValue={defaultMapUrl} placeholder="https://www.google.com/maps?q=…" />
       </label>
       <label className="block">
         <span className="field-label">Note for the applicant (optional)</span>

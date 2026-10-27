@@ -89,13 +89,13 @@ export const rescueInbox = async () => (await getSettings()).notifyEmail;
  */
 export const TEMPLATES = {
   /** To the applicant, right after they apply. */
-  applicationReceived: 0,
+  applicationReceived: 2,
   /** To the rescue, for every new application. */
-  newApplication: 0,
+  newApplication: 3,
   /** To the applicant, when a meet & greet is scheduled (with the .ics file attached). */
-  meetInvite: 0,
+  meetInvite: 4,
   /** To the rescue, when a meet & greet is scheduled (with the .ics file attached). */
-  meetBooked: 0,
+  meetBooked: 5,
 };
 
 /** Sends a Brevo template when its id is set, otherwise the built-in `fallback` email. */
