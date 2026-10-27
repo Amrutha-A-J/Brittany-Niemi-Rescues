@@ -1,7 +1,7 @@
 import { DemoAccount } from "@/components/demo/DemoAdmin";
 import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
-import { ActionForm, SubmitButton } from "@/components/admin/Forms";
+import { ActionForm, PasswordInput, SubmitButton } from "@/components/admin/Forms";
 import { Card, PageHeader } from "@/components/admin/ui";
 import { updatePassword } from "@/lib/admin/auth-actions";
 import { requireStaff } from "@/lib/admin/session";
@@ -19,12 +19,12 @@ export default async function AccountPage() {
           <ActionForm action={updatePassword}>
             <label className="block">
               <span className="field-label">New password</span>
-              <input name="password" type="password" autoComplete="new-password" minLength={8} required className="field" />
+              <PasswordInput name="password" autoComplete="new-password" minLength={8} required />
               <span className="field-hint">At least 8 characters.</span>
             </label>
             <label className="block">
               <span className="field-label">Type it again</span>
-              <input name="confirm" type="password" autoComplete="new-password" required className="field" />
+              <PasswordInput name="confirm" autoComplete="new-password" required />
             </label>
             <SubmitButton>Update password</SubmitButton>
           </ActionForm>

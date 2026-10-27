@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { FormState } from "@/lib/admin/auth-actions";
 
@@ -35,6 +35,25 @@ export function StatusMessage({ state }: { state: FormState }) {
       </p>
     );
   return null;
+}
+
+/** A password field with a Show/Hide button. */
+export function PasswordInput(props: Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">) {
+  const [shown, setShown] = useState(false);
+  return (
+    <span className="relative block">
+      <input {...props} type={shown ? "text" : "password"} className={`field pr-16 ${props.className ?? ""}`.trim()} />
+      <button
+        type="button"
+        onClick={() => setShown((v) => !v)}
+        aria-label={shown ? "Hide password" : "Show password"}
+        aria-pressed={shown}
+        className="absolute inset-y-0 right-0 px-3.5 text-[13px] font-medium text-muted hover:text-ink"
+      >
+        {shown ? "Hide" : "Show"}
+      </button>
+    </span>
+  );
 }
 
 /** A form bound to a `(prev, formData) => FormState` server action. */

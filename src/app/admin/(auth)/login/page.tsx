@@ -3,7 +3,7 @@ import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/admin/AuthCard";
-import { ActionForm, SubmitButton } from "@/components/admin/Forms";
+import { ActionForm, PasswordInput, SubmitButton } from "@/components/admin/Forms";
 import { login } from "@/lib/admin/auth-actions";
 import { currentUser } from "@/lib/admin/auth";
 
@@ -30,7 +30,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/admin/logi
         </label>
         <label className="block">
           <span className="field-label">Password</span>
-          <input name="password" type="password" autoComplete="current-password" required className="field" />
+          <PasswordInput name="password" autoComplete="current-password" required />
         </label>
         <SubmitButton pendingText="Logging in…" className="btn-primary w-full">
           Log in

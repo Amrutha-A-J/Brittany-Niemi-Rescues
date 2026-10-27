@@ -39,7 +39,7 @@ import { ApplicationActions } from "../admin/ApplicationActions";
 import { AuthCard } from "../admin/AuthCard";
 import { CatForm } from "../admin/CatForm";
 import { FilterableCatList } from "../admin/FilterableCatList";
-import { ActionForm, SubmitButton } from "../admin/Forms";
+import { ActionForm, PasswordInput, SubmitButton } from "../admin/Forms";
 import { MeetingList } from "../admin/MeetingList";
 import { ApplicationStatusBadge, Card, CatRow, Empty, PageHeader, rowButton, rowDangerButton, Thumb } from "../admin/ui";
 import { Logo } from "../site/Logo";
@@ -175,7 +175,7 @@ export const DemoLogin = suspended(function DemoLogin() {
         </label>
         <label className="block">
           <span className="field-label">Password</span>
-          <input name="password" type="password" autoComplete="current-password" required className="field" />
+          <PasswordInput name="password" autoComplete="current-password" required />
         </label>
         <button className="btn-primary w-full">Log in</button>
         {error && (
