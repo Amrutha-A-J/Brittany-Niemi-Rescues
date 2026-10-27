@@ -70,7 +70,7 @@ export function outlookCalendarUrl(e: CalEvent) {
 }
 
 function icsEscape(s: string) {
-  return s.replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  return s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
 }
 
 /** An .ics file that Apple Calendar, Outlook and Google can all import. */
