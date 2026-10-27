@@ -5,14 +5,22 @@ import { isDemo } from "@/lib/demo/config";
 const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/forgot-password"];
 
 /**
- * Sends visitors without a login cookie to the login page. Whether the cookie is
- * still valid is checked against the database by each admin page (requireStaff).
+ * Sends www.bnrescues.com to bnrescues.com, and visitors without a login cookie
+ * to the login page. Whether the cookie is still valid is checked against the
+ * database by each admin page (requireStaff).
  */
 export async function proxy(request: NextRequest) {
   if (isDemo) return NextResponse.next();
-  const path = request.nextUrl.pathname;
-  if (!request.cookies.has(SESSION_COOKIE) && !PUBLIC_ADMIN_PATHS.includes(path)) {
-    const url = request.nextUrl.clone();
+  const url = request.nextUrl.clone();
+
+  if (url.hostname.startsWith("www.")) {
+    url.hostname = url.hostname.slice(4);
+    url.port = "";
+    return NextResponse.redirect(url, 301);
+  }
+
+  const path = url.pathname;
+  if (path.startsWith("/admin") && !request.cookies.has(SESSION_COOKIE) && !PUBLIC_ADMIN_PATHS.includes(path)) {
     url.pathname = "/admin/login";
     url.search = path === "/admin" ? "" : `?next=${encodeURIComponent(path)}`;
     return NextResponse.redirect(url);
@@ -21,5 +29,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  // Everything except static files and photos, which never need either check.
+  matcher: ["/((?!_next/|photos/|icon\\.svg|favicon\\.ico).*)"],
 };

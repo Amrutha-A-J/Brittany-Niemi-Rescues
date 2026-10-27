@@ -78,9 +78,10 @@ Rule of thumb: never edit a migration that has already been applied. Add a new o
 
 ---
 
-## 2. Create the Cloudflare resources (one time)
+## 2. Cloudflare setup (done October 27, 2026)
 
-Do this in Brittany's Cloudflare account, the one that owns the domain.
+The site is live at **https://bnrescues.com**, from Brittany's Cloudflare account (brittany.niemi.rescues@outlook.com).
+The steps below are kept for reference, or for setting it up again in another account.
 
 ```bash
 cd web
@@ -90,8 +91,9 @@ npx wrangler r2 bucket create brittany-niemi-rescues-photos
 npx wrangler kv namespace create cache                 # prints an id
 ```
 
-1. In `wrangler.jsonc`, replace the placeholder ids: put the `database_id` in all four D1 entries,
-   and the KV `id` in both KV entries. Commit that change.
+1. In `wrangler.jsonc`, put the new `database_id` in the two top-level D1 entries and the KV `id` in both KV entries,
+   and change the domain in `routes` (and the default URL in `scripts/deploy.mjs`) if it isn't bnrescues.com. Commit that change.
+   Opening **Workers & Pages** in the dashboard once creates the account's `workers.dev` subdomain, which deploys need.
 2. Create the tables and her login in the live database:
    ```bash
    npm run db:migrate:remote
@@ -104,9 +106,10 @@ npx wrangler kv namespace create cache                 # prints an id
    npx wrangler secret put EMAIL_FROM_NAME
    npx wrangler secret put RESCUE_NOTIFY_EMAIL
    ```
-4. First deploy by hand: `NEXT_PUBLIC_SITE_URL=https://<her domain> npm run deploy`
-5. Cloudflare dashboard → **Workers & Pages → brittany-niemi-rescues → Settings → Domains & Routes → Add → Custom domain**,
-   and enter her domain. Cloudflare sets up DNS and HTTPS on its own, because the domain is already there.
+4. Deploy: `npm run deploy` (see `scripts/deploy.mjs`). It attaches bnrescues.com and www.bnrescues.com
+   (www redirects to the main domain), with DNS and HTTPS set up by Cloudflare.
+   The build uses an empty local database, then the script marks every page stale so the first visit renders
+   from the live database. Sample data can never end up on the live site this way.
 
 ---
 
@@ -118,8 +121,7 @@ npx wrangler kv namespace create cache                 # prints an id
 | Kind | Name | Value |
 |---|---|---|
 | Secret | `CLOUDFLARE_API_TOKEN` | Cloudflare → My Profile → API Tokens → Create Token → "Edit Cloudflare Workers" template, plus **Account → D1 → Edit** |
-| Secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → Workers & Pages → Account ID (right-hand side) |
-| Variable | `SITE_URL` | `https://<her domain>`, no trailing slash |
+| Secret | `CLOUDFLARE_ACCOUNT_ID` | `a54cbe78c327d2a7fd946607d3876476` |
 
 ---
 
@@ -152,7 +154,9 @@ The app sends these emails:
 ## 6. Going live checklist
 
 - [ ] Replace the placeholder logo: put the file at `public/logo.png` (or `.svg`) and update `src/components/site/Logo.tsx`
-- [ ] Create the Cloudflare resources and deploy (steps 2–3)
+- [x] Create the Cloudflare resources and deploy to bnrescues.com (step 2)
+- [ ] Turn on automatic deploys from GitHub (step 3)
+- [ ] Set up Brevo email (step 4)
 - [ ] Remove `NEXT_PUBLIC_NOINDEX` if it's set
 - [ ] Create her real login; don't load the sample data into the live database
 - [ ] Add the site in [Google Search Console](https://search.google.com/search-console) and submit `https://<domain>/sitemap.xml`

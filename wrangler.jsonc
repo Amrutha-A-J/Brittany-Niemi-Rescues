@@ -6,6 +6,13 @@
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  // The site lives only at bnrescues.com (www redirects there, see src/proxy.ts)
+  "routes": [
+    { "pattern": "bnrescues.com", "custom_domain": true },
+    { "pattern": "www.bnrescues.com", "custom_domain": true }
+  ],
+  "workers_dev": false,
+  "preview_urls": false,
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "brittany-niemi-rescues" }],
   "d1_databases": [
     {
@@ -34,21 +41,23 @@
   ],
   "observability": { "enabled": true },
   "env": {
-    // Used only while building for deploy, so public pages are pre-rendered from the live database.
+    // Used only while building for deploy (scripts/deploy.mjs). It points at an empty local
+    // database, so the build never bakes in sample or out-of-date data; after deploying, the
+    // script marks the built pages stale so the first visit renders them from the live database.
     "build": {
+      // Never deployed; it must not inherit the custom domains
+      "routes": [],
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "brittany-niemi-rescues",
-          "database_id": "dc1cef98-2d22-4946-a91e-4289c307adb9",
-          "migrations_dir": "migrations",
-          "remote": true
+          "database_name": "build-only",
+          "database_id": "00000000-0000-0000-0000-00000000b11d",
+          "migrations_dir": "migrations"
         },
         {
           "binding": "NEXT_TAG_CACHE_D1",
-          "database_name": "brittany-niemi-rescues",
-          "database_id": "dc1cef98-2d22-4946-a91e-4289c307adb9",
-          "remote": true
+          "database_name": "build-only",
+          "database_id": "00000000-0000-0000-0000-00000000b11d"
         }
       ],
       "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "brittany-niemi-rescues-photos" }],

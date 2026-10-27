@@ -16,7 +16,7 @@
     "db:seed": "node scripts/d1.mjs seed",
     "staff:add": "node scripts/d1.mjs staff",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "NEXT_DEV_WRANGLER_ENV=build opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "deploy": "node scripts/deploy.mjs",
     "cf-typegen": "wrangler types cloudflare-env.d.ts --env-interface CloudflareEnv --env-file .env.example"
   },
   "dependencies": {
