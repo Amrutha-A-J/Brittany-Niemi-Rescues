@@ -54,7 +54,10 @@ export type ApplicationStatus = "new" | "meet_scheduled" | "approved" | "rejecte
 export type Application = {
   id: string;
   type: ApplicationType;
+  /** The first cat chosen. */
   cat_id: string | null;
+  /** Every cat chosen, in order (demo store only; the database keeps them in application_cats). */
+  cat_ids?: string[];
   status: ApplicationStatus;
   name: string;
   email: string;

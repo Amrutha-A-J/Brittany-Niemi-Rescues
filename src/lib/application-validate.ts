@@ -36,7 +36,9 @@ export function parseApplication(type: ApplicationType, formData: FormData) {
     }
   }
 
-  return { contact, answers, catSlug: str("cat"), fieldErrors };
+  const catSlugs = [...new Set(formData.getAll("cat").map((v) => String(v).trim()).filter(Boolean))].slice(0, 10);
+
+  return { contact, answers, catSlugs, fieldErrors };
 }
 
 /** True when the submission looks like a bot (hidden field filled, or sent too fast). */

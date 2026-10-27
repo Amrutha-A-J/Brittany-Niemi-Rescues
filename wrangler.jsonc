@@ -39,7 +39,7 @@
       "id": "d4a5f0bd7513475bb2a63acea3d9e155"
     }
   ],
-  // Email settings (not secret). The Brevo API key is a secret: `npx wrangler secret put BREVO_API_KEY`
+  // Email settings (not secret). RESCUE_NOTIFY_EMAIL is the default until one is saved in Admin → Account. The Brevo API key is a secret: `npx wrangler secret put BREVO_API_KEY`
   "vars": {
     "EMAIL_FROM": "mail@bnrescues.com",
     "EMAIL_FROM_NAME": "Brittany Niemi Rescues",

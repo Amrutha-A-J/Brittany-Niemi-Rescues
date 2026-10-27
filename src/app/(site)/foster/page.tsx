@@ -1,4 +1,4 @@
-import { activeBonds } from "@/lib/cats";
+import { toFormCat } from "@/lib/cats";
 import type { Metadata } from "next";
 import { DemoApplicationForm } from "@/components/demo/DemoPublic";
 import { ApplicationForm } from "@/components/site/ApplicationForm";
@@ -31,7 +31,7 @@ export default function FosterPage() {
 async function LiveFosterForm() {
   const cats = await getAdoptableCats();
   const options = cats
-    .map((c) => ({ slug: c.slug, name: c.name, status: c.status, bondedWith: activeBonds(c).map((b) => b.name) }))
+    .map(toFormCat)
     .sort((a, b) => a.name.localeCompare(b.name));
   return <ApplicationForm type="foster" cats={options} />;
 }

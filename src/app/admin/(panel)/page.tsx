@@ -20,8 +20,12 @@ export default async function OverviewPage() {
   const [cats, newApps, upcoming, followUps] = await Promise.all([
     all<{ status: string }>("select status from cats"),
     all<{ id: string; name: string; type: string; created_at: string; cat_name: string | null }>(
-      `select a.id, a.name, a.type, a.created_at, c.name as cat_name
-       from applications a left join cats c on c.id = a.cat_id
+      `select a.id, a.name, a.type, a.created_at, (
+         select group_concat(name, ', ') from (
+           select c.name from application_cats x join cats c on c.id = x.cat_id where x.application_id = a.id order by x.position
+         )
+       ) as cat_name
+       from applications a
        where a.status = 'new' order by a.created_at desc limit 50`,
     ),
     all(`${MEETING_SQL} where m.status = 'scheduled' and m.starts_at >= ? order by m.starts_at limit 5`, new Date(nowMs() - 3 * 3600_000).toISOString()),

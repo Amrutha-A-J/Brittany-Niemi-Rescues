@@ -85,8 +85,17 @@ export function namesList(names: string[]) {
   return names.length < 2 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
 }
 
-/** What the admin cat pickers need to show and filter a cat. */
-export type PickerCat = { id: string; name: string; summary: string; category?: CatCategory; sex?: string; photo?: string };
+/** What the cat pickers need to show and filter a cat. */
+export type PickerCat = {
+  id: string;
+  name: string;
+  summary: string;
+  category?: CatCategory;
+  sex?: string;
+  photo?: string;
+  /** Ids of cats that go home with this one: ticking either ticks them all. */
+  bonded?: string[];
+};
 
 export const toPickerCat = (c: CatView): PickerCat => ({
   id: c.id,
@@ -95,6 +104,14 @@ export const toPickerCat = (c: CatView): PickerCat => ({
   category: c.category,
   sex: c.sex,
   photo: c.photos[0]?.url,
+});
+
+/** A cat in the public application form's picker, keyed by slug (the form submits slugs). */
+export const toFormCat = (c: CatView): PickerCat => ({
+  ...toPickerCat(c),
+  id: c.slug,
+  summary: c.status === "pending" ? `${catSummary(c)} · Adoption pending` : catSummary(c),
+  bonded: activeBonds(c).map((b) => b.slug),
 });
 
 export function sexLabel(sex: string) {

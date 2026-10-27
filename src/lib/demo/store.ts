@@ -182,14 +182,18 @@ export function deleteCat(catId: string) {
       if (p.cat_id === catId) p.cat_id = null;
     });
     d.applications.forEach((a) => {
-      if (a.cat_id === catId) a.cat_id = null;
+      a.cat_ids = appCatIds(a).filter((c) => c !== catId);
+      if (a.cat_id === catId) a.cat_id = a.cat_ids[0] ?? null;
     });
   });
 }
 
 /* --------------------------------------------------------- applications */
 
-export function createApplication(app: Pick<Application, "type" | "cat_id" | "name" | "email" | "phone" | "city" | "answers">) {
+/** Every cat an application is for (older sample data only has `cat_id`). */
+export const appCatIds = (a: Application) => a.cat_ids ?? (a.cat_id ? [a.cat_id] : []);
+
+export function createApplication(app: Pick<Application, "type" | "cat_id" | "cat_ids" | "name" | "email" | "phone" | "city" | "answers">) {
   update((d) => {
     d.applications.unshift({ ...app, id: id("app"), status: "new", admin_notes: "", decided_at: null, created_at: now(), updated_at: now() });
   });

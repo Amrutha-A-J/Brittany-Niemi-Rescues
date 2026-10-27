@@ -4,17 +4,32 @@ import Link from "next/link";
 import { ActionForm, PasswordInput, SubmitButton } from "@/components/admin/Forms";
 import { Card, PageHeader } from "@/components/admin/ui";
 import { updatePassword } from "@/lib/admin/auth-actions";
+import { saveNotifyEmail } from "@/lib/admin/settings-actions";
+import { getSettings } from "@/lib/settings";
 import { requireStaff } from "@/lib/admin/session";
 
 export const metadata = { title: "Account" };
 
 export default async function AccountPage() {
   if (isDemo) return <DemoAccount />;
-  const { user } = await requireStaff();
+  const [{ user }, settings] = await Promise.all([requireStaff(), getSettings()]);
   return (
     <>
       <PageHeader title="Account" description={`Logged in as ${user.email}`} />
       <div className="max-w-md space-y-6">
+        <Card title="Email notifications">
+          <ActionForm action={saveNotifyEmail}>
+            <label className="block">
+              <span className="field-label">Send new applications to</span>
+              <input type="email" name="notify_email" className="field" defaultValue={settings.notifyEmail} autoComplete="email" />
+              <span className="field-hint">
+                You get an email here for every adoption or foster application, and a calendar invite for every meet &amp;
+                greet you schedule.
+              </span>
+            </label>
+            <SubmitButton>Save</SubmitButton>
+          </ActionForm>
+        </Card>
         <Card title="Change password">
           <ActionForm action={updatePassword}>
             <label className="block">

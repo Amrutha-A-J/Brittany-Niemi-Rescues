@@ -11,7 +11,7 @@ import type { FormState } from "@/lib/admin/auth-actions";
 import type { CatInput } from "@/lib/admin/cat-actions";
 import type { MeetingRow } from "@/lib/admin/meetings";
 import { formatDate, icsFile, parseLocalDateTime, toLocalInputValue } from "@/lib/calendar";
-import { catSummary, photoUrl, toCatView, toPickerCat } from "@/lib/cats";
+import { catSummary, namesList, photoUrl, toCatView, toPickerCat } from "@/lib/cats";
 import {
   blobToDataUrl,
   deleteCat,
@@ -28,6 +28,7 @@ import {
   updateApplication,
   useDemoDB,
   type DemoDB,
+  appCatIds,
 } from "@/lib/demo/store";
 import { applicationTypeLabel } from "@/lib/forms";
 import { meetingEvent } from "@/lib/admin/meetings";
@@ -84,14 +85,18 @@ function useNow() {
   return now;
 }
 
+/** The cats an application is for, in the order the applicant chose them. */
+const appCatsOf = (db: DemoDB, a: Application) => appCatIds(a).flatMap((id) => db.cats.find((c) => c.id === id) ?? []);
+const catNamesOf = (db: DemoDB, a: Application) => namesList(appCatsOf(db, a).map((c) => c.name));
+
 function meetingRows(db: DemoDB): MeetingRow[] {
   return db.meetings.map((m) => {
     const app = db.applications.find((a) => a.id === m.application_id);
-    const cat = app?.cat_id ? db.cats.find((c) => c.id === app.cat_id) : undefined;
+    const cats = app ? appCatsOf(db, app) : [];
     return {
       ...m,
       applications: app
-        ? { id: app.id, name: app.name, email: app.email, phone: app.phone, type: app.type, status: app.status, cats: cat ? { name: cat.name, slug: cat.slug } : null }
+        ? { id: app.id, name: app.name, email: app.email, phone: app.phone, type: app.type, status: app.status, cats: cats.length ? { name: cats.map((c) => c.name).join(", "), slug: cats[0].slug } : null }
         : null,
     };
   });
@@ -104,9 +109,10 @@ async function setMeetingStatusAction(fd: FormData) {
 }
 
 function applicantOptions(db: DemoDB, catId: string): ApplicantOption[] {
-  const rank = (a: Application) => (a.cat_id === catId ? 0 : 2) + (a.status === "approved" ? 0 : 1);
+  const forCat = (a: Application) => appCatIds(a).includes(catId);
+  const rank = (a: Application) => (forCat(a) ? 0 : 2) + (a.status === "approved" ? 0 : 1);
   return db.applications
-    .filter((a) => a.type === "adopt" && (a.cat_id === catId || a.status === "approved"))
+    .filter((a) => a.type === "adopt" && (forCat(a) || a.status === "approved"))
     .sort((a, b) => rank(a) - rank(b))
     .map((a) => {
       const cat = db.cats.find((c) => c.id === a.cat_id);
@@ -116,7 +122,7 @@ function applicantOptions(db: DemoDB, catId: string): ApplicantOption[] {
         email: a.email,
         phone: a.phone,
         city: a.city,
-        label: `${a.name} (${a.status.replace("_", " ")}${cat && a.cat_id !== catId ? `, applied for ${cat.name}` : ""})`,
+        label: `${a.name} (${a.status.replace("_", " ")}${cat && !forCat(a) ? `, applied for ${cat.name}` : ""})`,
       };
     });
 }
@@ -312,7 +318,7 @@ export function DemoOverview() {
           {newApps.length ? (
             <ul className="divide-y divide-line">
               {newApps.slice(0, 6).map((a) => {
-                const cat = db.cats.find((c) => c.id === a.cat_id);
+                const catNames = catNamesOf(db, a);
                 return (
                   <li key={a.id}>
                     <Link href={links.application(a.id)} className="flex items-center justify-between gap-3 py-3 hover:underline">
@@ -321,7 +327,7 @@ export function DemoOverview() {
                         <span className="text-sm text-muted">
                           {" "}
                           · {applicationTypeLabel[a.type]}
-                          {cat ? ` for ${cat.name}` : ""}
+                          {catNames ? ` for ${catNames}` : ""}
                         </span>
                       </span>
                       <span className="text-xs text-muted">{formatDate(a.created_at)}</span>
@@ -532,7 +538,7 @@ export const DemoApplications = suspended(function DemoApplications({ type }: { 
   const status = APPLICATION_TABS.some((t) => t.value === rawStatus) ? rawStatus! : "new";
   const ofType = db.applications.filter((a) => a.type === type);
   const rows = ofType
-    .filter((a) => (status === "all" || a.status === status) && (!catId || a.cat_id === catId))
+    .filter((a) => (status === "all" || a.status === status) && (!catId || appCatIds(a).includes(catId)))
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
   const countBy = (s: string) => ofType.filter((a) => s === "all" || a.status === s).length;
   const href = (patch: Record<string, string>) => {
@@ -585,14 +591,14 @@ export const DemoApplications = suspended(function DemoApplications({ type }: { 
       ) : (
         <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
           {rows.map((a) => {
-            const cat = db.cats.find((c) => c.id === a.cat_id);
+            const catNames = catNamesOf(db, a);
             return (
               <li key={a.id}>
                 <Link href={links.application(a.id)} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3.5 hover:bg-card/60 sm:px-5">
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">{a.name}</span>
                     <span className="block truncate text-xs text-muted">
-                      {cat?.name ?? (type === "adopt" ? "No specific cat" : "Open to any cat")} ·{" "}
+                      {catNames || (type === "adopt" ? "No specific cat" : "Open to any cat")} ·{" "}
                       {a.city || "—"}
                     </span>
                   </span>
@@ -613,8 +619,9 @@ function decisionActions(app: Application, db: DemoDB) {
   return {
     approve: async (_p: FormState, fd: FormData): Promise<FormState> => {
       updateApplication(app.id, { status: "approved", decided_at: new Date().toISOString() });
-      const cat = db.cats.find((c) => c.id === app.cat_id);
-      if (cat && fd.get("mark_pending") === "on" && cat.status === "available") setCatStatus(cat.id, "pending");
+      if (fd.get("mark_pending") === "on") {
+        for (const cat of appCatsOf(db, app)) if (cat.status === "available") setCatStatus(cat.id, "pending");
+      }
       const addedFoster = app.type === "foster" && fd.get("add_to_fosters") === "on";
       if (addedFoster) fosterFromApplication(app);
       return { message: `Approved.${addedFoster ? " Added to Fosters." : ""}${fd.get("send_email") === "on" ? EMAIL_NOTE : ""}` };
@@ -646,7 +653,7 @@ export const DemoApplication = suspended(function DemoApplication({ id: routeId 
   if (!db) return <Loading />;
   const app = db.applications.find((a) => a.id === id);
   if (!app) return <Empty>That application doesn&apos;t exist (it may have been deleted).</Empty>;
-  const cat = db.cats.find((c) => c.id === app.cat_id);
+  const cats = appCatsOf(db, app);
   const meetings = meetingRows(db)
     .filter((m) => m.application_id === app.id)
     .sort((a, b) => b.starts_at.localeCompare(a.starts_at));
@@ -663,10 +670,15 @@ export const DemoApplication = suspended(function DemoApplication({ id: routeId 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <div className="space-y-6">
           <ApplicationSummary app={app} cat={
-              cat ? (
-                <Link href={links.cat(cat.id)} className="underline underline-offset-2">
-                  {cat.name}
-                </Link>
+              cats.length ? (
+                cats.map((c, i) => (
+                  <span key={c.id}>
+                    {i > 0 && (i === cats.length - 1 ? " and " : ", ")}
+                    <Link href={links.cat(c.id)} className="underline underline-offset-2">
+                      {c.name}
+                    </Link>
+                  </span>
+                ))
               ) : app.type === "adopt" ? (
                 "No specific cat"
               ) : (
@@ -684,8 +696,8 @@ export const DemoApplication = suspended(function DemoApplication({ id: routeId 
             <ApplicationActions
               id={app.id}
               firstName={app.name.split(" ")[0]}
-              catName={cat?.name ?? null}
-              catAvailable={cat?.status === "available"}
+              catName={catNamesOf(db, app) || null}
+              catAvailable={cats.some((c) => c.status === "available")}
               type={app.type}
               defaultWhen={defaultWhen}
               actions={decisionActions(app, db)}
@@ -698,11 +710,14 @@ export const DemoApplication = suspended(function DemoApplication({ id: routeId 
                 Move back to New
               </button>
             )}
-            {app.status === "approved" && cat && cat.status !== "adopted" && (
-              <Link href={links.adoptCat(cat.id, app.id)} className="btn-primary mt-4">
-                Finalise adoption of {cat.name} →
-              </Link>
-            )}
+            {app.status === "approved" &&
+              cats
+                .filter((c) => c.status !== "adopted")
+                .map((c) => (
+                  <Link key={c.id} href={links.adoptCat(c.id, app.id)} className="btn-primary mr-2 mt-4">
+                    Finalise adoption of {c.name} →
+                  </Link>
+                ))}
           </Card>
           <Card title="Private notes">
             <ActionForm
@@ -943,6 +958,12 @@ export function DemoAccount() {
   return (
     <>
       <PageHeader title="Account" description="Logged in as brittany (demo)" />
+      <Card title="Email notifications" className="mb-6 max-w-md">
+        <p className="text-sm text-muted">
+          In the real site, you choose here which email address gets new adoption and foster applications, and a
+          calendar invite for every meet &amp; greet. Emails aren&apos;t sent in this demo.
+        </p>
+      </Card>
       <Card title="Change password" className="max-w-md">
         <p className="text-sm text-muted">
           In the real site, you can change your password here, or reset it from the login page if you forget it. That

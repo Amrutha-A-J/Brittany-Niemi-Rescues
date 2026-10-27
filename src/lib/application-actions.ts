@@ -2,9 +2,10 @@
 
 import { parseApplication, looksLikeSpam } from "./application-validate";
 import { applicationTypeLabel } from "./forms";
-import { button, emailLayout, escapeHtml, rescueInbox, sendEmail } from "./email";
+import { namesList } from "./cats";
+import { button, emailLayout, escapeHtml, rescueInbox, sendTemplate } from "./email";
 import { site } from "./site";
-import { first, insertSql, newId, run } from "./db";
+import { all, batch, insertSql, newId } from "./db";
 import type { ApplicationType } from "./types";
 
 export type ApplyState = {
@@ -18,63 +19,92 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
 
   if (looksLikeSpam(formData)) return { ok: true }; // pretend success so bots don't retry
 
-  const { contact, answers, catSlug, fieldErrors } = parseApplication(type, formData);
-
-  const cat = catSlug ? await first<{ id: string; name: string }>("select id, name from cats where slug = ?", catSlug) : null;
+  const { contact, answers, catSlugs, fieldErrors } = parseApplication(type, formData);
 
   if (Object.keys(fieldErrors).length) {
     return { error: "Please check the highlighted fields.", fieldErrors };
   }
 
+  const found = catSlugs.length
+    ? await all<{ id: string; name: string; slug: string }>(
+        `select id, name, slug from cats where slug in (${catSlugs.map(() => "?").join(", ")})`,
+        ...catSlugs,
+      )
+    : [];
+  const cats = catSlugs.flatMap((slug) => found.filter((c) => c.slug === slug));
+
+  const id = newId();
   try {
-    await run(
-      ...insertSql("applications", {
-        id: newId(),
+    await batch([
+      insertSql("applications", {
+        id,
         type,
-        cat_id: cat?.id ?? null,
+        cat_id: cats[0]?.id ?? null,
         name: contact.name,
         email: contact.email,
         phone: contact.phone,
         city: contact.city,
         answers: JSON.stringify(answers),
       }),
-    );
+      ...cats.map((c, position) => insertSql("application_cats", { application_id: id, cat_id: c.id, position })),
+    ]);
   } catch (error) {
     console.error("[application insert failed]", error);
     return { error: "Something went wrong sending your application. Please try again." };
   }
 
+  const catNames = namesList(cats.map((c) => c.name));
   const about =
     type === "adopt"
-      ? cat
-        ? `for ${cat.name}`
+      ? catNames
+        ? `for ${catNames}`
         : "(no specific cat)"
-      : cat
-        ? `to foster ${cat.name}`
+      : catNames
+        ? `to foster ${catNames}`
         : "to foster (open to any cat)";
   const firstName = contact.name.split(" ")[0];
+  const typeLabel = applicationTypeLabel[type].toLowerCase();
+  const reviewUrl = `${site.url}/admin/applications/${id}`;
+  const inbox = await rescueInbox();
 
   await Promise.all([
-    rescueInbox() &&
-      sendEmail({
-        to: { email: rescueInbox() },
+    inbox &&
+      sendTemplate({
+        template: "newApplication",
+        to: { email: inbox },
         replyTo: { email: contact.email, name: contact.name },
-        subject: `New ${applicationTypeLabel[type].toLowerCase()} application ${about} from ${contact.name}`,
-        html: emailLayout(
-          `<p>You have a new ${applicationTypeLabel[type].toLowerCase()} application ${escapeHtml(about)}.</p>
+        params: {
+          type: typeLabel,
+          cat_names: catNames,
+          applicant_name: contact.name,
+          applicant_email: contact.email,
+          applicant_phone: contact.phone,
+          applicant_city: contact.city,
+          review_url: reviewUrl,
+        },
+        fallback: {
+          subject: `New ${typeLabel} application ${about} from ${contact.name}`,
+          html: emailLayout(
+            `<p>You have a new ${typeLabel} application ${escapeHtml(about)}.</p>
 <p><strong>${escapeHtml(contact.name)}</strong><br>${escapeHtml(contact.email)}<br>${escapeHtml(contact.phone)}<br>${escapeHtml(contact.city)}</p>
-<p>${button(`${site.url}/admin/applications/${type}`, "Review it")}</p>`,
-        ),
+<p>${button(reviewUrl, "Review it")}</p>`,
+          ),
+        },
       }),
-    sendEmail({
+    sendTemplate({
+      template: "applicationReceived",
       to: { email: contact.email, name: contact.name },
-      subject: type === "adopt" ? `We got your application${cat ? ` for ${cat.name}` : ""}!` : "Thanks for offering to foster!",
-      html: emailLayout(
-        `<p>Hi ${escapeHtml(firstName)},</p>
-<p>Thank you for your ${type === "adopt" ? `application${cat ? ` to adopt <strong>${escapeHtml(cat.name)}</strong>` : ""}` : "foster application"}. We read every one personally and will be in touch within a few days.</p>
+      replyTo: inbox ? { email: inbox } : undefined,
+      params: { first_name: firstName, type: typeLabel, cat_names: catNames },
+      fallback: {
+        subject: type === "adopt" ? `We got your application${catNames ? ` for ${catNames}` : ""}!` : "Thanks for offering to foster!",
+        html: emailLayout(
+          `<p>Hi ${escapeHtml(firstName)},</p>
+<p>Thank you for your ${type === "adopt" ? `application${catNames ? ` to adopt <strong>${escapeHtml(catNames)}</strong>` : ""}` : "foster application"}. We read every one personally and will be in touch within a few days.</p>
 <p>In the meantime, you can follow our cats on Instagram at <a href="https://www.instagram.com/${site.instagram}/">@${site.instagram}</a>.</p>
 <p>With purrs,<br>${escapeHtml(site.name)}</p>`,
-      ),
+        ),
+      },
     }),
   ]);
 

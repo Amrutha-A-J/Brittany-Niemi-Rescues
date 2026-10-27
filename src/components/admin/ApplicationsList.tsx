@@ -2,11 +2,12 @@ import Link from "next/link";
 import { APPLICATION_TABS, applicationListMeta } from "@/lib/admin/application-tabs";
 import { requireStaff } from "@/lib/admin/session";
 import { formatDate } from "@/lib/calendar";
-import { all, nested, toApplication } from "@/lib/db";
+import { APP_CATS_SQL, all, appCats, toApplication, type AppCat } from "@/lib/db";
+import { namesList } from "@/lib/cats";
 import type { Application, ApplicationType } from "@/lib/types";
 import { ApplicationStatusBadge, Empty, PageHeader } from "./ui";
 
-type Row = Application & { cats: { id: string; name: string } | null };
+type Row = Application & { cats: AppCat[] };
 
 /** One list per application type (adoption or foster), with status tabs. */
 export async function ApplicationsList({
@@ -24,9 +25,9 @@ export async function ApplicationsList({
   await requireStaff();
   const [data, counts, cats] = await Promise.all([
     all(
-      `select a.*, json(case when c.id is null then null else json_object('id', c.id, 'name', c.name) end) as cats
-       from applications a left join cats c on c.id = a.cat_id
-       where a.type = ? and (? = 'all' or a.status = ?) and (? = '' or a.cat_id = ?)
+      `select a.*, ${APP_CATS_SQL} from applications a
+       where a.type = ? and (? = 'all' or a.status = ?)
+         and (? = '' or exists (select 1 from application_cats x where x.application_id = a.id and x.cat_id = ?))
        order by a.created_at desc`,
       type,
       status,
@@ -37,7 +38,7 @@ export async function ApplicationsList({
     all<{ status: string }>("select status from applications where type = ?", type),
     type === "adopt" ? all<{ id: string; name: string }>("select id, name from cats order by name") : Promise.resolve([]),
   ]);
-  const rows: Row[] = data.map((r) => ({ ...toApplication(r), cats: nested<{ id: string; name: string }>(r.cats) }));
+  const rows: Row[] = data.map((r) => ({ ...toApplication(r), cats: appCats(r.cats) }));
   const countBy = (s: string) => counts.filter((c) => s === "all" || c.status === s).length;
 
   const href = (patch: Record<string, string>) => {
@@ -91,7 +92,7 @@ export async function ApplicationsList({
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{a.name}</span>
                   <span className="block truncate text-xs text-muted">
-                    {a.cats?.name ?? (type === "adopt" ? "No specific cat" : "Open to any cat")} ·{" "}
+                    {namesList(a.cats.map((c) => c.name)) || (type === "adopt" ? "No specific cat" : "Open to any cat")} ·{" "}
                     {a.city || "—"}
                   </span>
                 </span>

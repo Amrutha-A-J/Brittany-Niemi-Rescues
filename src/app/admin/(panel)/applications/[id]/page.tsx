@@ -11,7 +11,8 @@ import { deleteApplication, reopenApplication, saveNotes } from "@/lib/admin/app
 import type { MeetingRow } from "@/lib/admin/meetings";
 import { requireStaff } from "@/lib/admin/session";
 import { formatDate, toLocalInputValue } from "@/lib/calendar";
-import { MEETING_SQL, all, first, nested, toApplication, toMeeting } from "@/lib/db";
+import { APP_CATS_SQL, MEETING_SQL, all, appCats, first, toApplication, toMeeting } from "@/lib/db";
+import { namesList } from "@/lib/cats";
 import { applicationListMeta } from "@/lib/admin/application-tabs";
 import { applicationTypeLabel } from "@/lib/forms";
 import { nowMs } from "@/lib/time";
@@ -31,14 +32,13 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
   await requireStaff();
   const [data, meetingRows] = await Promise.all([
     first(
-      `select a.*, json(case when c.id is null then null else json_object('id', c.id, 'name', c.name, 'slug', c.slug, 'status', c.status) end) as cats
-       from applications a left join cats c on c.id = a.cat_id where a.id = ?`,
+      `select a.*, ${APP_CATS_SQL} from applications a where a.id = ?`,
       id,
     ),
     all(`${MEETING_SQL} where m.application_id = ? order by m.starts_at desc`, id),
   ]);
   if (!data) notFound();
-  const app = { ...toApplication(data), cats: nested<{ id: string; name: string; slug: string; status: string }>(data.cats) };
+  const app = { ...toApplication(data), cats: appCats(data.cats) };
   const meetings = meetingRows.map(toMeeting) as MeetingRow[];
 
   // Default meet & greet: two days from now at 6pm.
@@ -61,10 +61,15 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <div className="space-y-6">
           <ApplicationSummary app={app} cat={
-              app.cats ? (
-                <Link href={`/admin/cats/${app.cats.id}`} className="underline underline-offset-2">
-                  {app.cats.name}
-                </Link>
+              app.cats.length ? (
+                app.cats.map((c, i) => (
+                  <span key={c.id}>
+                    {i > 0 && (i === app.cats.length - 1 ? " and " : ", ")}
+                    <Link href={`/admin/cats/${c.id}`} className="underline underline-offset-2">
+                      {c.name}
+                    </Link>
+                  </span>
+                ))
               ) : app.type === "adopt" ? (
                 "No specific cat"
               ) : (
@@ -82,8 +87,8 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
             <ApplicationActions
               id={app.id}
               firstName={app.name.split(" ")[0]}
-              catName={app.cats?.name ?? null}
-              catAvailable={app.cats?.status === "available"}
+              catName={namesList(app.cats.map((c) => c.name)) || null}
+              catAvailable={app.cats.some((c) => c.status === "available")}
               type={app.type}
               defaultWhen={defaultWhen}
             />
@@ -93,11 +98,14 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
                 <button className="text-sm text-muted underline underline-offset-2 hover:text-ink">Move back to New</button>
               </form>
             )}
-            {app.status === "approved" && app.cats && app.cats.status !== "adopted" && (
-              <Link href={`/admin/cats/${app.cats.id}/adopt?application=${app.id}`} className="btn-primary mt-4">
-                Finalise adoption of {app.cats.name} →
-              </Link>
-            )}
+            {app.status === "approved" &&
+              app.cats
+                .filter((c) => c.status !== "adopted")
+                .map((c) => (
+                  <Link key={c.id} href={`/admin/cats/${c.id}/adopt?application=${app.id}`} className="btn-primary mr-2 mt-4">
+                    Finalise adoption of {c.name} →
+                  </Link>
+                ))}
           </Card>
           <Card title="Private notes">
             <ActionForm action={saveNotes}>

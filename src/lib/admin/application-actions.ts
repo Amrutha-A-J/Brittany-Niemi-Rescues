@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { googleCalendarUrl, icsFile, parseLocalDateTime, formatDateTime } from "@/lib/calendar";
-import { button, emailLayout, escapeHtml, rescueInbox, sendEmail, textToHtml } from "@/lib/email";
-import { first, insertSql, newId, nested, nowIso, run, toApplication } from "@/lib/db";
+import { googleCalendarUrl, icsFile, outlookCalendarUrl, parseLocalDateTime, formatDateTime } from "@/lib/calendar";
+import { namesList } from "@/lib/cats";
+import { button, emailLayout, escapeHtml, rescueInbox, sendEmail, sendTemplate, textToHtml } from "@/lib/email";
+import { APP_CATS_SQL, appCats, first, insertSql, newId, nowIso, run, toApplication } from "@/lib/db";
 import { site } from "@/lib/site";
 import type { FormState } from "./auth-actions";
 import { ensureFosterFromApplication } from "./fosters-db";
@@ -16,14 +17,13 @@ const text = (fd: FormData, name: string) => String(fd.get(name) ?? "").trim();
 async function loadApplication(id: string) {
   await assertStaff();
   const row = await first(
-    `select a.id, a.type, a.status, a.name, a.email, a.phone, a.city, a.answers, a.cat_id,
-       json(case when c.id is null then null else json_object('id', c.id, 'name', c.name, 'slug', c.slug, 'status', c.status) end) as cat
-     from applications a left join cats c on c.id = a.cat_id where a.id = ?`,
+    `select a.id, a.type, a.status, a.name, a.email, a.phone, a.city, a.answers, a.cat_id, ${APP_CATS_SQL}
+     from applications a where a.id = ?`,
     id,
   );
   if (!row) throw new Error("Application not found");
-  const cat = nested<{ id: string; name: string; slug: string; status: string }>(row.cat);
-  return { app: toApplication(row), cat };
+  const cats = appCats(row.cats);
+  return { app: toApplication(row), cats, catNames: namesList(cats.map((c) => c.name)) };
 }
 
 function refresh(id?: string) {
@@ -40,14 +40,17 @@ export async function saveNotes(_prev: FormState, fd: FormData): Promise<FormSta
 
 export async function approveApplication(_prev: FormState, fd: FormData): Promise<FormState> {
   const id = text(fd, "id");
-  const { app, cat } = await loadApplication(id);
+  const { app, cats, catNames } = await loadApplication(id);
   await run("update applications set status = 'approved', decided_at = ? where id = ?", nowIso(), id);
 
-  if (cat && on(fd, "mark_pending") && cat.status === "available") {
-    await run("update cats set status = 'pending' where id = ?", cat.id);
+  const available = cats.filter((c) => c.status === "available");
+  if (available.length && on(fd, "mark_pending")) {
+    for (const c of available) {
+      await run("update cats set status = 'pending' where id = ?", c.id);
+      revalidatePath(`/cats/${c.slug}`);
+    }
     revalidatePath("/");
     revalidatePath("/adopt");
-    revalidatePath(`/cats/${cat.slug}`);
   }
 
   let fosterNote = "";
@@ -60,10 +63,11 @@ export async function approveApplication(_prev: FormState, fd: FormData): Promis
   let emailNote = "";
   if (on(fd, "send_email")) {
     const message = text(fd, "message");
+    const inbox = await rescueInbox();
     const res = await sendEmail({
       to: { email: app.email, name: app.name },
-      replyTo: rescueInbox() ? { email: rescueInbox() } : undefined,
-      subject: app.type === "adopt" ? `Good news about ${cat ? cat.name : "your application"}!` : "Welcome to the foster team!",
+      replyTo: inbox ? { email: inbox } : undefined,
+      subject: app.type === "adopt" ? `Good news about ${catNames || "your application"}!` : "Welcome to the foster team!",
       html: emailLayout(`<p>Hi ${escapeHtml(app.name.split(" ")[0])},</p>${textToHtml(message)}<p>${escapeHtml(site.name)}</p>`),
     });
     emailNote = res.ok ? " Email sent." : res.skipped ? " (Email not sent: email isn't set up yet.)" : " The email failed to send.";
@@ -79,9 +83,10 @@ export async function rejectApplication(_prev: FormState, fd: FormData): Promise
 
   let emailNote = "";
   if (on(fd, "send_email")) {
+    const inbox = await rescueInbox();
     const res = await sendEmail({
       to: { email: app.email, name: app.name },
-      replyTo: rescueInbox() ? { email: rescueInbox() } : undefined,
+      replyTo: inbox ? { email: inbox } : undefined,
       subject: "About your application",
       html: emailLayout(
         `<p>Hi ${escapeHtml(app.name.split(" ")[0])},</p>${textToHtml(text(fd, "message"))}<p>${escapeHtml(site.name)}</p>`,
@@ -116,7 +121,7 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
   const location = text(fd, "location");
   const notes = text(fd, "notes");
 
-  const { app, cat } = await loadApplication(id);
+  const { app, catNames } = await loadApplication(id);
   const meeting = { id: newId() };
   await run(
     ...insertSql("meetings", { id: meeting.id, application_id: id, starts_at: start.toISOString(), duration_minutes: minutes, location, notes }),
@@ -125,48 +130,89 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
     await run("update applications set status = 'meet_scheduled' where id = ?", id);
   }
 
-  const who = cat ? cat.name : app.type === "foster" ? "our foster team" : "our cats";
-  const event = {
+  const who = catNames || (app.type === "foster" ? "our foster team" : "our cats");
+  const whenText = formatDateTime(start.toISOString());
+  const where = location || "Location to be confirmed";
+  const ics = (e: Parameters<typeof icsFile>[0]) => [{ name: "meet-and-greet.ics", content: Buffer.from(icsFile(e)).toString("base64") }];
+
+  // The applicant's calendar entry.
+  const invite = {
     uid: meeting.id,
     title: `Meet & greet with ${who} (${site.name})`,
     start,
     minutes,
     location,
-    description: `Meet & greet with ${app.name}${cat ? ` for ${cat.name}` : ""}.${notes ? `\n\n${notes}` : ""}`,
+    description: `Meet & greet with ${site.name}${catNames ? ` to meet ${catNames}` : ""}.${notes ? `\n\n${notes}` : ""}`,
   };
-  const ics = Buffer.from(icsFile(event)).toString("base64");
+  // The rescue's calendar entry, with the applicant's contact details.
+  const booked = {
+    ...invite,
+    uid: `${meeting.id}-rescue`,
+    title: `Meet & greet: ${app.name}${catNames ? ` + ${catNames}` : ""}`,
+    description: [`${app.name} · ${app.phone} · ${app.email}`, catNames && `Cats: ${catNames}`, notes, `${site.url}/admin/applications/${id}`]
+      .filter(Boolean)
+      .join("\n"),
+  };
+  const shared = { when: whenText, duration: `${minutes} minutes`, location: where, notes, cat_names: catNames };
+  const inbox = await rescueInbox();
 
   let emailNote = "";
   if (on(fd, "send_email")) {
-    const res = await sendEmail({
+    const res = await sendTemplate({
+      template: "meetInvite",
       to: { email: app.email, name: app.name },
-      replyTo: rescueInbox() ? { email: rescueInbox() } : undefined,
-      subject: `Your meet & greet${cat ? ` with ${cat.name}` : ""}: ${formatDateTime(start.toISOString())}`,
-      html: emailLayout(
-        `<p>Hi ${escapeHtml(app.name.split(" ")[0])},</p>
+      replyTo: inbox ? { email: inbox } : undefined,
+      params: {
+        ...shared,
+        first_name: app.name.split(" ")[0],
+        who,
+        google_calendar_url: googleCalendarUrl(invite),
+        outlook_calendar_url: outlookCalendarUrl(invite),
+      },
+      fallback: {
+        subject: `Your meet & greet${catNames ? ` with ${catNames}` : ""}: ${whenText}`,
+        html: emailLayout(
+          `<p>Hi ${escapeHtml(app.name.split(" ")[0])},</p>
 <p>We'd love for you to meet ${escapeHtml(who)}! Here are the details:</p>
-<p><strong>${escapeHtml(formatDateTime(start.toISOString()))}</strong> (${minutes} minutes)<br>${escapeHtml(location || "Location to be confirmed")}</p>
+<p><strong>${escapeHtml(whenText)}</strong> (${minutes} minutes)<br>${escapeHtml(where)}</p>
 ${notes ? textToHtml(notes) : ""}
-<p>${button(googleCalendarUrl(event), "Add to Google Calendar")}</p>
-<p style="font-size:13px;color:#666">Using Apple Calendar or Outlook? Open the attached <em>meet-and-greet.ics</em> file.</p>
+<p>${button(googleCalendarUrl(invite), "Add to Google Calendar")}${button(outlookCalendarUrl(invite), "Add to Outlook")}</p>
+<p style="font-size:13px;color:#666">Using Apple Calendar? Open the attached <em>meet-and-greet.ics</em> file.</p>
 <p>If the time doesn't work, just reply to this email.</p>
 <p>${escapeHtml(site.name)}</p>`,
-      ),
-      attachments: [{ name: "meet-and-greet.ics", content: ics }],
+        ),
+      },
+      attachments: ics(invite),
     });
     emailNote = res.ok ? " Invite emailed." : res.skipped ? " (Invite not emailed: email isn't set up yet.)" : " The invite email failed to send.";
   }
 
-  if (rescueInbox()) {
-    await sendEmail({
-      to: { email: rescueInbox() },
-      subject: `Meet & greet booked: ${app.name}, ${formatDateTime(start.toISOString())}`,
-      html: emailLayout(
-        `<p>Meet & greet with <strong>${escapeHtml(app.name)}</strong>${cat ? ` for ${escapeHtml(cat.name)}` : ""}.</p>
-<p>${escapeHtml(formatDateTime(start.toISOString()))} · ${escapeHtml(location)}</p>
-<p>${button(googleCalendarUrl(event), "Add to Google Calendar")}</p>`,
-      ),
-      attachments: [{ name: "meet-and-greet.ics", content: ics }],
+  if (inbox) {
+    await sendTemplate({
+      template: "meetBooked",
+      to: { email: inbox },
+      replyTo: { email: app.email, name: app.name },
+      params: {
+        ...shared,
+        applicant_name: app.name,
+        applicant_email: app.email,
+        applicant_phone: app.phone,
+        application_url: `${site.url}/admin/applications/${id}`,
+        google_calendar_url: googleCalendarUrl(booked),
+        outlook_calendar_url: outlookCalendarUrl(booked),
+      },
+      fallback: {
+        subject: `Meet & greet booked: ${app.name}, ${whenText}`,
+        html: emailLayout(
+          `<p>Meet & greet with <strong>${escapeHtml(app.name)}</strong>${catNames ? ` for ${escapeHtml(catNames)}` : ""}.</p>
+<p><strong>${escapeHtml(whenText)}</strong> (${minutes} minutes)<br>${escapeHtml(where)}</p>
+<p>${escapeHtml(app.phone)}<br>${escapeHtml(app.email)}</p>
+${notes ? textToHtml(notes) : ""}
+<p>${button(googleCalendarUrl(booked), "Add to Google Calendar")}${button(outlookCalendarUrl(booked), "Add to Outlook")}</p>
+<p>${button(`${site.url}/admin/applications/${id}`, "Open the application")}</p>`,
+        ),
+      },
+      attachments: ics(booked),
     });
   }
 

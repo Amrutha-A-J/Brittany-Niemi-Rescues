@@ -95,10 +95,32 @@ export function nested<T>(v: unknown): T | null {
   return json<T | null>(v, null);
 }
 
-/** A meeting with its application and that application's cat (`applications`). Use the `m` alias. */
+/** Every cat an application is for, as JSON (`cats`); read it with appCats(). Use the `a` alias for the application. */
+export const APP_CATS_SQL = `(
+  select json_group_array(json_object('id', c.id, 'name', c.name, 'slug', c.slug, 'status', c.status, 'position', x.position))
+  from application_cats x join cats c on c.id = x.cat_id where x.application_id = a.id
+) as cats`;
+
+export type AppCat = { id: string; name: string; slug: string; status: string };
+
+/** The cats from APP_CATS_SQL, in the order the applicant chose them. */
+export function appCats(v: unknown): AppCat[] {
+  return json<(AppCat & { position: number })[]>(v, [])
+    .sort((x, y) => x.position - y.position)
+    .map((c) => ({ id: c.id, name: c.name, slug: c.slug, status: c.status }));
+}
+
+/**
+ * A meeting with its application and that application's cats (`applications`). Use the `m` alias.
+ * `cats.name` lists every cat ("Pip, Rosie"); `cats.slug` is the first one's.
+ */
 export const MEETING_SQL = `select m.*, json(case when a.id is null then null else json_object(
   'id', a.id, 'name', a.name, 'email', a.email, 'phone', a.phone, 'type', a.type, 'status', a.status,
-  'cats', json(case when ac.id is null then null else json_object('name', ac.name, 'slug', ac.slug) end)
+  'cats', json(case when ac.id is null then null else json_object('name', (
+    select group_concat(name, ', ') from (
+      select c.name from application_cats x join cats c on c.id = x.cat_id where x.application_id = a.id order by x.position
+    )
+  ), 'slug', ac.slug) end)
 ) end) as applications
 from meetings m
 left join applications a on a.id = m.application_id

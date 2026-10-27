@@ -1,4 +1,4 @@
-import { activeBonds } from "@/lib/cats";
+import { toFormCat } from "@/lib/cats";
 import type { Metadata } from "next";
 import { DemoApplicationForm } from "@/components/demo/DemoPublic";
 import { ApplicationForm } from "@/components/site/ApplicationForm";
@@ -29,8 +29,8 @@ async function LiveApplicationForm({ searchParams }: { searchParams: PageProps<"
   const { cat } = await searchParams;
   const cats = await getAdoptableCats();
   const options = cats
-    .map((c) => ({ slug: c.slug, name: c.name, status: c.status, bondedWith: activeBonds(c).map((b) => b.name) }))
+    .map(toFormCat)
     .sort((a, b) => a.name.localeCompare(b.name));
-  const defaultCat = typeof cat === "string" && options.some((c) => c.slug === cat) ? cat : "";
+  const defaultCat = typeof cat === "string" && options.some((c) => c.id === cat) ? cat : "";
   return <ApplicationForm type="adopt" cats={options} defaultCat={defaultCat} />;
 }

@@ -1,4 +1,5 @@
 import "server-only";
+import { getSettings } from "./settings";
 import { site } from "./site";
 
 type Attachment = { name: string; content: string /* base64 */ };
@@ -79,4 +80,34 @@ export async function sendEmail(opts: {
   }
 }
 
-export const rescueInbox = () => process.env.RESCUE_NOTIFY_EMAIL || process.env.EMAIL_FROM || "";
+/** Where the rescue's own notifications go (Admin → Account). */
+export const rescueInbox = async () => (await getSettings()).notifyEmail;
+
+/**
+ * Brevo template ids (Brevo → Transactional → Templates). 0 means the template isn't made yet,
+ * so the email uses the built-in design passed as `fallback` instead.
+ */
+export const TEMPLATES = {
+  /** To the applicant, right after they apply. */
+  applicationReceived: 0,
+  /** To the rescue, for every new application. */
+  newApplication: 0,
+  /** To the applicant, when a meet & greet is scheduled (with the .ics file attached). */
+  meetInvite: 0,
+  /** To the rescue, when a meet & greet is scheduled (with the .ics file attached). */
+  meetBooked: 0,
+};
+
+/** Sends a Brevo template when its id is set, otherwise the built-in `fallback` email. */
+export function sendTemplate(opts: {
+  template: keyof typeof TEMPLATES;
+  params: Record<string, string>;
+  fallback: { subject: string; html: string };
+  to: { email: string; name?: string };
+  replyTo?: { email: string; name?: string };
+  attachments?: Attachment[];
+}) {
+  const { template, params, fallback, ...rest } = opts;
+  const templateId = TEMPLATES[template];
+  return templateId ? sendEmail({ ...rest, templateId, params }) : sendEmail({ ...rest, ...fallback });
+}

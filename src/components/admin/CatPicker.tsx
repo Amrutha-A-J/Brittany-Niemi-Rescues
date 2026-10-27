@@ -5,7 +5,7 @@ import { CATEGORIES, type PickerCat } from "@/lib/cats";
 import { Thumb } from "./ui";
 
 /**
- * A searchable, filterable list of cats to tick. Controlled (`selected` + `onChange`); pass `name`
+ * A searchable, filterable list of cats to tick (admin pickers and the public application form). Controlled (`selected` + `onChange`); pass `name`
  * to also submit the ticked ids with the surrounding form (one hidden input each).
  */
 export function CatPicker({
@@ -13,11 +13,14 @@ export function CatPicker({
   selected,
   onChange,
   name,
+  emptyText = "None selected",
 }: {
   cats: PickerCat[];
   selected: string[];
   onChange: (ids: string[]) => void;
   name?: string;
+  /** Shown under the list when nothing is ticked. */
+  emptyText?: string;
 }) {
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("");
@@ -30,7 +33,11 @@ export function CatPicker({
       (!category || c.category === category) &&
       (!sex || c.sex === sex),
   );
-  const toggle = (id: string, on: boolean) => onChange(on ? [...selected, id] : selected.filter((x) => x !== id));
+  const toggle = (id: string, on: boolean) => {
+    // Bonded cats go home together, so they're ticked and unticked as a group.
+    const group = [id, ...(cats.find((c) => c.id === id)?.bonded ?? []).filter((b) => cats.some((c) => c.id === b))];
+    onChange(on ? [...new Set([...selected, ...group])] : selected.filter((x) => !group.includes(x)));
+  };
 
   return (
     <div className="space-y-3">
@@ -80,7 +87,7 @@ export function CatPicker({
         {shown.length === 0 && <li className="px-3 py-6 text-center text-sm text-muted">No cats match.</li>}
       </ul>
       <p className="text-xs text-muted">
-        {selected.length ? `${selected.length} selected` : "None selected"}
+        {selected.length ? `${selected.length} selected` : emptyText}
         {selected.length > 0 && (
           <>
             {" · "}

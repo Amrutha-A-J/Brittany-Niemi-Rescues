@@ -54,6 +54,21 @@ export function googleCalendarUrl(e: CalEvent) {
   return `https://calendar.google.com/calendar/render?${params}`;
 }
 
+/** Outlook.com / Hotmail. Times are UTC, so they show in the reader's own time zone. */
+export function outlookCalendarUrl(e: CalEvent) {
+  const end = new Date(e.start.getTime() + e.minutes * 60_000);
+  const params = new URLSearchParams({
+    path: "/calendar/action/compose",
+    rru: "addevent",
+    subject: e.title,
+    startdt: e.start.toISOString(),
+    enddt: end.toISOString(),
+    body: e.description,
+    location: e.location,
+  });
+  return `https://outlook.live.com/calendar/0/deeplink/compose?${params}`;
+}
+
 function icsEscape(s: string) {
   return s.replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
 }

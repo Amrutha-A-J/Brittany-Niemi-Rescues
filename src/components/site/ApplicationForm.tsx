@@ -1,9 +1,10 @@
 "use client";
 
-import { namesList } from "@/lib/cats";
+import { namesList, type PickerCat } from "@/lib/cats";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { submitApplication, type ApplyState } from "@/lib/application-actions";
+import { CatPicker } from "@/components/admin/CatPicker";
 import { applicationFields, contactFields, type FieldDef } from "@/lib/forms";
 import type { ApplicationType } from "@/lib/types";
 
@@ -14,25 +15,29 @@ export function ApplicationForm({
   submit = submitApplication,
 }: {
   type: ApplicationType;
-  cats?: { slug: string; name: string; status: string; bondedWith?: string[] }[];
+  /** Keyed by slug (see toFormCat). */
+  cats?: PickerCat[];
   defaultCat?: string;
   /** Defaults to the real server action; demo mode passes a browser-only one. */
   submit?: (prev: ApplyState, formData: FormData) => Promise<ApplyState>;
 }) {
   const [state, action, pending] = useActionState<ApplyState, FormData>(submit, {});
-  const [values, setValues] = useState<Record<string, string>>({ cat: defaultCat });
+  const [values, setValues] = useState<Record<string, string>>(() => {
+    const first = cats.find((c) => c.id === defaultCat);
+    return { cat: first ? [first.id, ...(first.bonded ?? [])].join("|") : "" };
+  });
   const [started] = useState(() => Date.now());
   const errors = state.fieldErrors ?? {};
 
   if (state.ok) {
-    const cat = cats.find((c) => c.slug === values.cat);
+    const chosen = namesList(cats.filter((c) => values.cat.split("|").includes(c.id)).map((c) => c.name));
     return (
       <div className="rounded-2xl bg-card px-6 py-12 text-center sm:px-12">
         <p className="font-serif text-[32px] leading-tight">Thank you{values.name ? `, ${values.name.split(" ")[0]}` : ""}!</p>
         <p className="mx-auto mt-3 max-w-[420px] text-[15px] leading-relaxed text-muted">
           {type === "adopt"
-            ? `Your application${cat ? ` for ${cat.name}` : ""} is on its way to us.`
-            : `Your foster application${cat ? ` for ${cat.name}` : ""} is on its way to us.`}{" "}
+            ? `Your application${chosen ? ` for ${chosen}` : ""} is on its way to us.`
+            : `Your foster application${chosen ? ` for ${chosen}` : ""} is on its way to us.`}{" "}
           We read every one personally and will be in touch within a few days. Check your inbox for a confirmation email.
         </p>
         <Link href="/adopt" className="btn-outline mt-8">
@@ -43,6 +48,7 @@ export function ApplicationForm({
   }
 
   const set = (name: string, value: string) => setValues((v) => ({ ...v, [name]: value }));
+  const selectedCats = values.cat ? values.cat.split("|") : [];
 
   return (
     <form action={action} className="space-y-10" noValidate>
@@ -57,29 +63,40 @@ export function ApplicationForm({
       <fieldset>
         <legend className="font-serif text-2xl">Which cat?</legend>
         <div className="mt-4 space-y-6">
-          <label className="block">
-            <span className="field-label">
-              {type === "adopt" ? "The cat you'd like to adopt" : "The cat you'd like to foster"}
-            </span>
-            <select name="cat" className="field" value={values.cat ?? ""} onChange={(e) => set("cat", e.target.value)}>
-              <option value="">{type === "adopt" ? "Not sure yet, open to suggestions" : "I'm open to any cat that needs me"}</option>
-              {cats.map((c) => (
-                <option key={c.slug} value={c.slug}>
-                  {c.name}
-                  {type === "adopt" && c.status === "pending" ? " (adoption pending)" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div>
+            <p className="field-label">
+              {type === "adopt" ? "The cats you'd like to adopt" : "The cats you'd like to foster"}
+            </p>
+            <p className="field-hint mb-3 mt-0">
+              Tick one or more.{" "}
+              {type === "adopt"
+                ? "Not sure yet? Leave them all unticked and we'll suggest a match."
+                : "Open to any cat that needs you? Leave them all unticked."}
+            </p>
+            <CatPicker
+              cats={cats}
+              selected={selectedCats}
+              onChange={(ids) => set("cat", ids.join("|"))}
+              name="cat"
+              emptyText={type === "adopt" ? "None selected: open to suggestions" : "None selected: open to any cat"}
+            />
+          </div>
           {(() => {
-            const chosen = cats.find((c) => c.slug === values.cat);
-            if (!chosen?.bondedWith?.length) return null;
-            return (
-              <p className="rounded-xl border border-line px-4 py-3 text-sm leading-relaxed">
-                {chosen.name} is bonded with {namesList(chosen.bondedWith)}, so they go home together. This application
-                covers {chosen.bondedWith.length > 1 ? "all of them" : "both"}.
-              </p>
-            );
+            // One note per bonded group (Pip + Rosie is one group, not two notes).
+            const seen = new Set<string>();
+            return cats
+              .filter((c) => selectedCats.includes(c.id) && c.bonded?.length)
+              .map((c) => {
+                if (seen.has(c.id)) return null;
+                c.bonded!.forEach((b) => seen.add(b));
+                const group = cats.filter((o) => o.id === c.id || c.bonded!.includes(o.id)).map((o) => o.name);
+                return (
+                  <p key={c.id} className="rounded-xl border border-line px-4 py-3 text-sm leading-relaxed">
+                    {namesList(group)} are bonded, so they go home together. This application covers{" "}
+                    {group.length > 2 ? "all of them" : "both"}.
+                  </p>
+                );
+              });
           })()}
           {applicationFields[type]
             .filter((f) => f.group === "cat" && (!f.showIf || f.showIf.values.includes(values[f.showIf.field] ?? "")))
