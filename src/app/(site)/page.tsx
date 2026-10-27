@@ -1,12 +1,19 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { CatBrowser } from "@/components/site/CatBrowser";
 import { JsonLd } from "@/components/site/JsonLd";
 import { Logo } from "@/components/site/Logo";
+import { RichHeading } from "@/components/site/RichHeading";
 import { getAdoptableCats } from "@/lib/data";
 import { SocialIcon } from "@/components/site/SocialIcons";
 import { site, socialLinks } from "@/lib/site";
+import { getSiteText } from "@/lib/site-text";
 
 export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const steps = [
   { title: "Find your cat", body: "Browse the cats above and tap any one to read their story." },
@@ -16,7 +23,7 @@ const steps = [
 ];
 
 export default async function HomePage() {
-  const cats = await getAdoptableCats();
+  const [cats, text] = await Promise.all([getAdoptableCats(), getSiteText()]);
 
   return (
     <>
@@ -24,8 +31,12 @@ export default async function HomePage() {
         data={{
           "@context": "https://schema.org",
           "@type": "AnimalShelter",
+          "@id": `${site.url}/#organization`,
           name: site.name,
+          alternateName: site.shortName,
           url: site.url,
+          logo: `${site.url}/icon-512.png`,
+          image: `${site.url}/opengraph-image`,
           description: site.description,
           areaServed: `${site.city}, ${site.region}`,
           address: {
@@ -41,13 +52,9 @@ export default async function HomePage() {
       <section className="container-page pb-20 pt-16 text-center sm:pt-20">
         <Logo className="mx-auto h-[110px] sm:h-[150px]" />
         <h1 className="mx-auto mt-4 max-w-[680px] font-serif text-[44px] leading-[1.08] sm:text-[56px]">
-          Every cat deserves
-          <br />a <em>soft place</em> to land.
+          <RichHeading text={text.heroHeading} />
         </h1>
-        <p className="mx-auto mt-6 max-w-[440px] text-[15px] leading-relaxed text-muted">
-          We rescue, foster and rehome cats of every age in {site.city}, {site.regionCode}, from bottle babies to
-          golden-years seniors and the ones who need a little extra care.
-        </p>
+        <p className="mx-auto mt-6 max-w-[440px] text-[15px] leading-relaxed text-muted">{text.heroIntro}</p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link href="#cats" className="btn-primary">
             Meet the cats

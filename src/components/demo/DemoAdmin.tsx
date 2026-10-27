@@ -963,3 +963,17 @@ export function DemoAccount() {
     </>
   );
 }
+
+export function DemoSiteText() {
+  return (
+    <>
+      <PageHeader title="Website text" description="The words at the top of the home page." />
+      <Card title="Home page" className="max-w-md">
+        <p className="text-sm text-muted">
+          In the real site, you can change the home page headline and intro here. That isn&apos;t switched on in this
+          demo.
+        </p>
+      </Card>
+    </>
+  );
+}
