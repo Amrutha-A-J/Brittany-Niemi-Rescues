@@ -29,7 +29,8 @@ export function button(href: string, label: string) {
   return `<a href="${escapeHtml(href)}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;border-radius:999px;padding:10px 18px;font-size:14px;margin:4px 8px 4px 0">${escapeHtml(label)}</a>`;
 }
 
-export const isEmailConfigured = Boolean(process.env.BREVO_API_KEY && process.env.EMAIL_FROM);
+// Read on each send: on Cloudflare, settings reach process.env per request, not at module load.
+const isEmailConfigured = () => Boolean(process.env.BREVO_API_KEY && process.env.EMAIL_FROM);
 
 /**
  * Sends an email through Brevo's transactional API.
@@ -42,7 +43,7 @@ export async function sendEmail(opts: {
   replyTo?: { email: string; name?: string };
   attachments?: Attachment[];
 }): Promise<{ ok: boolean; skipped?: boolean }> {
-  if (!isEmailConfigured) {
+  if (!isEmailConfigured()) {
     console.info(`[email skipped: Brevo not configured] to=${opts.to.email} subject="${opts.subject}"`);
     return { ok: false, skipped: true };
   }

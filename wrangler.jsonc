@@ -39,14 +39,22 @@
       "id": "d4a5f0bd7513475bb2a63acea3d9e155"
     }
   ],
+  // Email settings (not secret). The Brevo API key is a secret: `npx wrangler secret put BREVO_API_KEY`
+  "vars": {
+    "EMAIL_FROM": "hello@bnrescues.com",
+    "EMAIL_FROM_NAME": "Brittany Niemi Rescues",
+    "RESCUE_NOTIFY_EMAIL": "brittany.niemi.rescues@outlook.com"
+  },
   "observability": { "enabled": true },
   "env": {
     // Used only while building for deploy (scripts/deploy.mjs). It points at an empty local
     // database, so the build never bakes in sample or out-of-date data; after deploying, the
     // script marks the built pages stale so the first visit renders them from the live database.
     "build": {
-      // Never deployed; it must not inherit the custom domains
+      // Never deployed; it must not inherit the custom domains. It needs no email settings either.
       "routes": [],
+      "vars": {},
+      "services": [],
       "d1_databases": [
         {
           "binding": "DB",
