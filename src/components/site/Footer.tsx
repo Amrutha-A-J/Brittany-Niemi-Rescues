@@ -20,6 +20,12 @@ export function Footer() {
           </span>
         </div>
       </div>
+      <p className="pb-8 text-center text-[11px] text-muted sm:text-left">
+        Handcoded by Ami at{" "}
+        <a href="https://pixelmoose.ca" target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-ink">
+          pixelmoose.ca
+        </a>
+      </p>
     </footer>
   );
 }
