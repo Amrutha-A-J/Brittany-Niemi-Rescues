@@ -355,7 +355,7 @@ export function FosterDetail({
             )}
           </Card>
 
-          <Card title="Add a cat to their history">
+          <Card title="Add cats to their history">
             {/* Remounts after each added cat, so the form starts fresh. */}
             <AddPlacementForm
               key={placements.length}
@@ -445,27 +445,28 @@ function AddPlacementForm({
   today: string;
   action: (formData: FormData) => void;
 }) {
-  const [catId, setCatId] = useState("");
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="foster_id" value={fosterId} />
-      <label className="block">
-        <span className="field-label">Cat</span>
-        <select name="cat_id" className="field" value={catId} onChange={(e) => setCatId(e.target.value)}>
-          <option value="">A cat from before the website (type the name)</option>
-          {cats.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      {!catId && (
-        <label className="block">
-          <span className="field-label">Cat&apos;s name</span>
-          <input name="cat_name" className="field" placeholder="e.g. Mochi" />
-        </label>
+      {cats.length > 0 && (
+        <fieldset>
+          <legend className="field-label">Cats on the website</legend>
+          <div className="max-h-56 space-y-2 overflow-y-auto rounded-xl border border-line p-3">
+            {cats.map((c) => (
+              <label key={c.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                <input type="checkbox" name="cat_id" value={c.id} className="h-4 w-4 accent-ink" />
+                {c.name}
+              </label>
+            ))}
+          </div>
+          <span className="field-hint">Tick as many as you like, e.g. a whole litter.</span>
+        </fieldset>
       )}
+      <label className="block">
+        <span className="field-label">Cats from before the website</span>
+        <input name="cat_names" className="field" placeholder="e.g. Mochi, Biscuit" />
+        <span className="field-hint">Optional. Separate names with commas.</span>
+      </label>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="field-label">Started</span>

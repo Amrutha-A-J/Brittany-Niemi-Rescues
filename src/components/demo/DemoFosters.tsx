@@ -15,7 +15,7 @@ import {
   useDemoDB,
   type DemoFosterInput,
 } from "@/lib/demo/store";
-import { FOSTER_KINDS } from "@/lib/fosters";
+import { FOSTER_KINDS, catNames, placementCats } from "@/lib/fosters";
 import { links } from "@/lib/links";
 import { FosterDetail, FosterDetailsForm, FosterList } from "../admin/Fosters";
 import { Card, Empty, PageHeader } from "../admin/ui";
@@ -113,20 +113,20 @@ function DemoFosterInner({ routeId }: { routeId: string }) {
           return { message: "Saved." };
         },
         addPlacement: async (_p, fd) => {
-          const catId = text(fd, "cat_id");
-          const catName = catId ? (getDemoDB().cats.find((c) => c.id === catId)?.name ?? "") : text(fd, "cat_name");
-          if (!catName) return { error: "Choose a cat, or type the name of a cat from before the website." };
+          const cats = placementCats(fd, (catId) => getDemoDB().cats.find((c) => c.id === catId)?.name);
+          if (!cats.length) return { error: "Tick at least one cat, or type the name of a cat from before the website." };
           const startedOn = text(fd, "started_on");
           if (!startedOn) return { error: "Add the date they started fostering." };
-          addPlacement({
-            foster_id: foster.id,
-            cat_id: catId || null,
-            cat_name: catName,
-            started_on: startedOn,
-            ended_on: text(fd, "ended_on") || null,
-            notes: text(fd, "notes"),
-          });
-          return { ok: true, message: `Added ${catName}.` };
+          for (const c of cats) {
+            addPlacement({
+              foster_id: foster.id,
+              ...c,
+              started_on: startedOn,
+              ended_on: text(fd, "ended_on") || null,
+              notes: text(fd, "notes"),
+            });
+          }
+          return { ok: true, message: `Added ${catNames(cats)}.` };
         },
         endPlacement: (fd) => endPlacement(text(fd, "id"), text(fd, "ended_on")),
         removePlacement: (fd) => removePlacement(text(fd, "id")),

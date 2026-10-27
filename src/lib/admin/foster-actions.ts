@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { first, insertSql, newId, run, updateSql } from "@/lib/db";
-import { FOSTER_KINDS } from "@/lib/fosters";
+import { all, batch, insertSql, newId, run, updateSql } from "@/lib/db";
+import { FOSTER_KINDS, catNames, placementCats } from "@/lib/fosters";
 import type { FormState } from "./auth-actions";
 import { assertStaff } from "./session";
 
@@ -57,28 +57,28 @@ export async function deleteFoster(fd: FormData) {
 export async function addPlacement(_prev: FormState, fd: FormData): Promise<FormState> {
   await assertStaff();
   const fosterId = text(fd, "foster_id");
-  const catId = text(fd, "cat_id");
-  let catName = text(fd, "cat_name");
-  if (catId) {
-    const cat = await first<{ name: string }>("select name from cats where id = ?", catId);
-    catName = cat?.name ?? catName;
-  }
-  if (!catName) return { error: "Choose a cat, or type the name of a cat from before the website." };
+  const siteCats = await all<{ id: string; name: string }>("select id, name from cats");
+  const names = new Map(siteCats.map((c) => [c.id, c.name]));
+  const cats = placementCats(fd, (id) => names.get(id));
+  if (!cats.length) return { error: "Tick at least one cat, or type the name of a cat from before the website." };
   const startedOn = dateOrNull(text(fd, "started_on"));
   if (!startedOn) return { error: "Add the date they started fostering." };
-  await run(
-    ...insertSql("foster_placements", {
-      id: newId(),
-      foster_id: fosterId,
-      cat_id: catId || null,
-      cat_name: catName,
-      started_on: startedOn,
-      ended_on: dateOrNull(text(fd, "ended_on")),
-      notes: text(fd, "notes"),
-    }),
+  const endedOn = dateOrNull(text(fd, "ended_on"));
+  const notes = text(fd, "notes");
+  await batch(
+    cats.map((c) =>
+      insertSql("foster_placements", {
+        id: newId(),
+        foster_id: fosterId,
+        ...c,
+        started_on: startedOn,
+        ended_on: endedOn,
+        notes,
+      }),
+    ),
   );
   refresh(fosterId);
-  return { ok: true, message: `Added ${catName}.` };
+  return { ok: true, message: `Added ${catNames(cats)}.` };
 }
 
 export async function endPlacement(fd: FormData) {

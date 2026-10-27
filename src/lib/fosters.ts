@@ -1,3 +1,4 @@
+import { namesList } from "./cats";
 import type { FosterPlacement, FosterWithPlacements } from "./types";
 
 export type FosterStatus = "fostering" | "available" | "on_break";
@@ -24,3 +25,22 @@ export function fosterSummary(f: FosterWithPlacements) {
   }, null);
   return { placements, current, status, count: placements.length, lastDate };
 }
+
+/**
+ * The cats picked in "Add cats to their history": ticked cats from the site (`cat_id`, any number)
+ * plus names typed for cats from before the website (`cat_names`, separated by commas or new lines).
+ */
+export function placementCats(fd: FormData, nameOf: (catId: string) => string | undefined) {
+  const fromSite = [...new Set(fd.getAll("cat_id").map(String).filter(Boolean))].flatMap((catId) => {
+    const name = nameOf(catId);
+    return name ? [{ cat_id: catId as string | null, cat_name: name }] : [];
+  });
+  const typed = String(fd.get("cat_names") ?? "")
+    .split(/[,\n]/)
+    .map((n) => n.trim())
+    .filter(Boolean)
+    .map((name) => ({ cat_id: null as string | null, cat_name: name }));
+  return [...fromSite, ...typed];
+}
+
+export const catNames = (cats: { cat_name: string }[]) => namesList(cats.map((c) => c.cat_name));
