@@ -89,6 +89,7 @@ export function CatForm({ cat, onSave = saveCat, upload = uploadToStorage, maxEd
     ...otherCats.filter((c) => c.id !== cat?.id),
     ...(cat?.bonded ?? []).filter((b) => !otherCats.some((c) => c.id === b.id)),
   ].sort((a, b) => a.name.localeCompare(b.name));
+  const thisCat = v.name.trim() || "this cat";
   const set = <K extends keyof typeof v>(key: K, value: (typeof v)[K]) => setV((s) => ({ ...s, [key]: value }));
 
   const uploading = photos.some((p) => p.uploading);
@@ -370,9 +371,10 @@ export function CatForm({ cat, onSave = saveCat, upload = uploadToStorage, maxEd
 
         <section className="space-y-3 rounded-2xl border border-line bg-white p-5 sm:p-6">
           <div>
-            <h2 className="text-sm font-semibold">Bonded with</h2>
+            <h2 className="text-sm font-semibold">Bonded cats</h2>
             <p className="mt-1 text-xs text-muted">
-              Cats that have to go home together. Both cats&apos; pages say so, and you only need to set it on one of them.
+              Does {thisCat} have to go home with another cat? Tick them below. This only links cats that are already on
+              the site; it doesn&apos;t add a new one.
             </p>
           </div>
           {bondChoices.length ? (
@@ -387,7 +389,10 @@ export function CatForm({ cat, onSave = saveCat, upload = uploadToStorage, maxEd
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted">Add the other cat first, then come back here.</p>
+            <p className="rounded-xl bg-card p-3 text-xs leading-relaxed text-muted">
+              There are no other cats to pick yet. If {thisCat} has a bonded partner, save {thisCat} first, add the
+              partner as its own cat, and tick {thisCat} on the partner&apos;s page.
+            </p>
           )}
         </section>
 
