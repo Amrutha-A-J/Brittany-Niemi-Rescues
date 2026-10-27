@@ -145,8 +145,10 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
 
   const who = catNames || (app.type === "foster" ? "our foster team" : "our cats");
   const whenText = formatDateTime(start.toISOString());
+  // The place as words; the template links it to map_url. A bare link or a pin alone reads "View on map".
   const isLink = /^https?:\/\//.test(location);
-  const where = isLink ? "Tap “Open in Maps” for directions" : location || "Location to be confirmed";
+  const where = location && !isLink ? location : mapUrl ? "View on map" : "Location to be confirmed";
+  const whereHtml = mapUrl ? `<a href="${escapeHtml(mapUrl)}" style="color:#111">${escapeHtml(where)}</a>` : escapeHtml(where);
   const ics = (e: Parameters<typeof icsFile>[0]) => [{ name: "meet-and-greet.ics", content: Buffer.from(icsFile(e)).toString("base64") }];
 
   // The applicant's calendar entry.
@@ -161,7 +163,6 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
       .join("\n"),
   };
   const shared = { when: whenText, duration: `${minutes} minutes`, location: where, map_url: mapUrl, notes, cat_names: catNames };
-  const mapButton = mapUrl ? button(mapUrl, "Open in Maps") : "";
   const inbox = await rescueInbox();
 
   let emailNote = "";
@@ -183,8 +184,7 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
         html: emailLayout(
           `<p>Hi ${escapeHtml(app.name.split(" ")[0])},</p>
 <p>We'd love for you to meet ${escapeHtml(who)}! Here are the details:</p>
-<p><strong>${escapeHtml(whenText)}</strong> (${minutes} minutes)<br>${escapeHtml(where)}</p>
-${mapButton && `<p>${mapButton}</p>`}
+<p><strong>${escapeHtml(whenText)}</strong> (${minutes} minutes)<br>${whereHtml}</p>
 ${notes ? textToHtml(notes) : ""}
 <p>${button(googleCalendarUrl(invite), "Add to Google Calendar")}${button(outlookCalendarUrl(invite), "Add to Outlook")}${button(inviteIcsUrl(meeting.id), "Add to Apple Calendar")}</p>
 <p>If the time doesn't work, just reply to this email.</p>
@@ -215,8 +215,7 @@ ${notes ? textToHtml(notes) : ""}
         subject: `Meet & greet booked: ${app.name}, ${whenText}`,
         html: emailLayout(
           `<p>Meet & greet with <strong>${escapeHtml(app.name)}</strong>${catNames ? ` for ${escapeHtml(catNames)}` : ""}.</p>
-<p><strong>${escapeHtml(whenText)}</strong> (${minutes} minutes)<br>${escapeHtml(where)}</p>
-${mapButton && `<p>${mapButton}</p>`}
+<p><strong>${escapeHtml(whenText)}</strong> (${minutes} minutes)<br>${whereHtml}</p>
 <p>${escapeHtml(app.phone)}<br>${escapeHtml(app.email)}</p>
 ${notes ? textToHtml(notes) : ""}
 <p>${button(googleCalendarUrl(booked), "Add to Google Calendar")}${button(outlookCalendarUrl(booked), "Add to Outlook")}${button(`${site.url}/admin/meetings/${meeting.id}/ics`, "Add to Apple Calendar")}</p>
