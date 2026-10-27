@@ -34,6 +34,7 @@ import { meetingEvent } from "@/lib/admin/meetings";
 import type { Adoption, Application, ApplicationType } from "@/lib/types";
 import { APPLICATION_TABS, applicationListMeta } from "@/lib/admin/application-tabs";
 import { AdminNav } from "../admin/AdminNav";
+import { ThemeToggle } from "../site/ThemeToggle";
 import { AdoptionForm, type ApplicantOption } from "../admin/AdoptionForm";
 import { ApplicationActions } from "../admin/ApplicationActions";
 import { AuthCard } from "../admin/AuthCard";
@@ -236,9 +237,12 @@ export function DemoPanel({ children }: { children: React.ReactNode }) {
           <Link href="/admin" aria-label="Dashboard">
             <Logo size={28} />
           </Link>
-          <button onClick={logout} className="text-sm text-muted hover:text-ink md:hidden">
-            Log out
-          </button>
+          <div className="flex items-center gap-3 md:hidden">
+            <ThemeToggle />
+            <button onClick={logout} className="text-sm text-muted hover:text-ink">
+              Log out
+            </button>
+          </div>
         </div>
         <nav aria-label="Admin">
           <AdminNav newCounts={newCounts} />
@@ -253,6 +257,7 @@ export function DemoPanel({ children }: { children: React.ReactNode }) {
           <button onClick={logout} className="block text-muted hover:text-ink">
             Log out
           </button>
+          <ThemeToggle className="-ml-2.5" />
         </div>
       </aside>
       <main className="min-w-0 flex-1 px-5 py-8 md:px-10 md:py-10">{children}</main>

@@ -14,9 +14,10 @@
   --success: #1f7a4d;
 }
 
-/* Dark mode follows the visitor's system setting. */
+/* Dark mode: follows the system setting unless the visitor picks Light or Dark
+   (ThemeToggle sets data-theme on <html>). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --ink: #f1f1f1;
     --muted: #a8a8a8;
     --faint: #767676;
@@ -27,6 +28,21 @@
     --danger: #f97066;
     --success: #4cc38a;
   }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #f1f1f1;
+  --muted: #a8a8a8;
+  --faint: #767676;
+  --line: #2c2c2c;
+  --card: #1d1d1d;
+  --paper: #121212;
+  --wash: #0c0c0c;
+  --danger: #f97066;
+  --success: #4cc38a;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 @theme inline {

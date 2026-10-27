@@ -3,6 +3,7 @@ import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { Logo } from "@/components/site/Logo";
+import { ThemeToggle } from "@/components/site/ThemeToggle";
 import { logout } from "@/lib/admin/auth-actions";
 import { requireStaff } from "@/lib/admin/session";
 import { all } from "@/lib/db";
@@ -24,9 +25,12 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           <Link href="/admin" aria-label="Dashboard">
             <Logo size={28} />
           </Link>
-          <form action={logout} className="md:hidden">
-            <button className="text-sm text-muted hover:text-ink">Log out</button>
-          </form>
+          <div className="flex items-center gap-3 md:hidden">
+            <ThemeToggle />
+            <form action={logout}>
+              <button className="text-sm text-muted hover:text-ink">Log out</button>
+            </form>
+          </div>
         </div>
         <nav aria-label="Admin">
           <AdminNav newCounts={newCounts} />
@@ -38,6 +42,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           <form action={logout}>
             <button className="text-muted hover:text-ink">Log out</button>
           </form>
+          <ThemeToggle className="-ml-2.5" />
           <p className="truncate pt-2 text-xs text-faint">{user.email}</p>
         </div>
       </aside>
