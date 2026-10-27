@@ -13,10 +13,12 @@ import { catSummary, toCatView } from "@/lib/cats";
 
 export const metadata = { title: "Adoption record" };
 
-/** The static demo has one page per screen; the record id comes from `?id=`. */
-export async function generateStaticParams() {
-  return isDemo ? [{ id: "_" }] : [];
-}
+/**
+ * The static demo has one page per screen; the record id comes from `?id=`.
+ * Only the demo defines this: with it, the live site would treat the page as static
+ * and fail when the login check reads the session cookie.
+ */
+export const generateStaticParams = isDemo ? async () => [{ id: "_" }] : undefined;
 
 export default async function AdoptedCatPage({ params }: PageProps<"/admin/adopted/[id]">) {
   const { id } = await params;

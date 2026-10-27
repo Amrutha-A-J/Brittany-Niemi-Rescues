@@ -11,6 +11,9 @@ export function AuthCard({ title, children }: { title: string; children: React.R
         <h1 className="mb-6 font-serif text-[28px] leading-tight">{title}</h1>
         {children}
       </div>
+      <Link href="/" className="mt-6 text-sm text-muted underline-offset-4 hover:text-ink hover:underline">
+        ← Back to website
+      </Link>
     </div>
   );
 }
