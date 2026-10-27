@@ -40,6 +40,8 @@ type CatFormProps = {
   upload?: (blob: Blob, path: string) => Promise<string>;
   /** Longest photo edge in px (demo mode uses smaller photos to fit browser storage). */
   maxEdge?: number;
+  /** Cats this one can be bonded with (the rescue's other cats still looking for a home). */
+  otherCats?: { id: string; name: string }[];
 };
 
 async function uploadToStorage(blob: Blob, path: string) {
@@ -49,7 +51,7 @@ async function uploadToStorage(blob: Blob, path: string) {
   return data.path;
 }
 
-export function CatForm({ cat, onSave = saveCat, upload = uploadToStorage, maxEdge = MAX_EDGE }: CatFormProps) {
+export function CatForm({ cat, onSave = saveCat, upload = uploadToStorage, maxEdge = MAX_EDGE, otherCats = [] }: CatFormProps) {
   const router = useRouter();
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +83,12 @@ export function CatForm({ cat, onSave = saveCat, upload = uploadToStorage, maxEd
       .sort((a, b) => a.position - b.position)
       .map((p) => ({ path: p.path, alt: p.alt, url: photoUrl(p.path) })),
   );
+  const [bondedIds, setBondedIds] = useState<string[]>(() => (cat?.bonded ?? []).map((b) => b.id));
+  // Partners that are already adopted aren't in `otherCats`, but the bond is kept.
+  const bondChoices = [
+    ...otherCats.filter((c) => c.id !== cat?.id),
+    ...(cat?.bonded ?? []).filter((b) => !otherCats.some((c) => c.id === b.id)),
+  ].sort((a, b) => a.name.localeCompare(b.name));
   const set = <K extends keyof typeof v>(key: K, value: (typeof v)[K]) => setV((s) => ({ ...s, [key]: value }));
 
   const uploading = photos.some((p) => p.uploading);
@@ -139,6 +147,7 @@ export function CatForm({ cat, onSave = saveCat, upload = uploadToStorage, maxEd
       personality: v.personality.split(","),
       adoption_fee: fee,
       photos: photos.map((p) => ({ path: p.path, alt: p.alt })),
+      bonded_ids: bondedIds,
     };
     startSaving(async () => {
       const res = await onSave(input);
@@ -357,6 +366,29 @@ export function CatForm({ cat, onSave = saveCat, upload = uploadToStorage, maxEd
           <GoodWith label="Good with kids" value={v.good_with_kids} onChange={(x) => set("good_with_kids", x)} />
           <GoodWith label="Good with cats" value={v.good_with_cats} onChange={(x) => set("good_with_cats", x)} />
           <GoodWith label="Good with dogs" value={v.good_with_dogs} onChange={(x) => set("good_with_dogs", x)} />
+        </section>
+
+        <section className="space-y-3 rounded-2xl border border-line bg-white p-5 sm:p-6">
+          <div>
+            <h2 className="text-sm font-semibold">Bonded with</h2>
+            <p className="mt-1 text-xs text-muted">
+              Cats that have to go home together. Both cats&apos; pages say so, and you only need to set it on one of them.
+            </p>
+          </div>
+          {bondChoices.length ? (
+            <div className="max-h-56 space-y-2 overflow-y-auto">
+              {bondChoices.map((c) => (
+                <Check
+                  key={c.id}
+                  label={c.name}
+                  checked={bondedIds.includes(c.id)}
+                  onChange={(on) => setBondedIds((ids) => (on ? [...ids, c.id] : ids.filter((x) => x !== c.id)))}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted">Add the other cat first, then come back here.</p>
+          )}
         </section>
 
         {error && (

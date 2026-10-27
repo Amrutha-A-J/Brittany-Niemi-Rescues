@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { catSummary, categoryLabel, sexLabel } from "@/lib/cats";
+import { activeBonds, bondLabel, catSummary, categoryLabel, namesList, sexLabel } from "@/lib/cats";
+import { links } from "@/lib/links";
 import type { CatView, YesNoUnknown } from "@/lib/types";
 
 const goodWith: Record<YesNoUnknown, string> = { yes: "Yes", no: "No", unknown: "Not sure yet" };
@@ -7,12 +8,14 @@ const goodWith: Record<YesNoUnknown, string> = { yes: "Yes", no: "No", unknown: 
 export function CatDetails({ cat, headingLevel = "h2" }: { cat: CatView; headingLevel?: "h1" | "h2" }) {
   const Heading = headingLevel;
   const adopted = cat.status === "adopted";
+  const bonds = adopted ? [] : activeBonds(cat);
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="tag border border-line">{categoryLabel(cat.category)}</span>
+          {bonds.length > 0 && <span className="tag border border-line">{bondLabel(bonds.length)}</span>}
           {cat.status === "pending" && <span className="tag bg-ink text-white">Adoption pending</span>}
           {adopted && <span className="tag bg-ink text-white">Found a home</span>}
         </div>
@@ -24,6 +27,24 @@ export function CatDetails({ cat, headingLevel = "h2" }: { cat: CatView; heading
         <p className="rounded-xl bg-card p-4 text-sm">
           🎉 {cat.name} has found a forever home! Take a look at the other cats still waiting.
         </p>
+      )}
+
+      {bonds.length > 0 && (
+        <div className="rounded-xl border border-line p-4">
+          <p className="eyebrow mb-1.5">{bondLabel(bonds.length)}</p>
+          <p className="text-sm leading-relaxed">
+            {cat.name} is bonded with{" "}
+            {bonds.map((b, i) => (
+              <span key={b.id}>
+                {i > 0 && (i === bonds.length - 1 ? " and " : ", ")}
+                <Link href={links.publicCat(b.slug)} className="underline underline-offset-2">
+                  {b.name}
+                </Link>
+              </span>
+            ))}
+            , so they&apos;ll go home together. One application covers {bonds.length > 1 ? "all of them" : "both"}.
+          </p>
+        </div>
       )}
 
       {cat.description && <p className="text-[15px] leading-relaxed text-ink/85">{cat.description}</p>}
@@ -65,7 +86,7 @@ export function CatDetails({ cat, headingLevel = "h2" }: { cat: CatView; heading
       {!adopted && (
         <div className="flex flex-wrap gap-3 pt-1">
           <Link href={`/apply?cat=${cat.slug}`} className="btn-primary">
-            Apply to adopt {cat.name}
+            Apply to adopt {bonds.length ? namesList([cat.name, ...bonds.map((b) => b.name)]) : cat.name}
           </Link>
         </div>
       )}

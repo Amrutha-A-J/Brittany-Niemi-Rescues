@@ -1,11 +1,12 @@
 import { DemoAdoptCat } from "@/components/demo/DemoAdmin";
 import { isDemo } from "@/lib/demo/config";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AdoptionForm } from "@/components/admin/AdoptionForm";
 import { PageHeader } from "@/components/admin/ui";
 import { applicantOptions } from "@/lib/admin/applicants";
 import { requireStaff } from "@/lib/admin/session";
-import { first } from "@/lib/db";
+import { all, first } from "@/lib/db";
 
 export const metadata = { title: "Mark as adopted" };
 
@@ -26,6 +27,10 @@ export default async function AdoptCatPage({ params, searchParams }: PageProps<"
     id,
   );
   if (!cat) notFound();
+  const partners = await all<{ id: string; name: string }>(
+    "select o.id, o.name from cat_bonds b join cats o on o.id = b.bonded_id where b.cat_id = ? and o.status != 'adopted'",
+    cat.id,
+  );
   if (cat.status === "adopted") redirect(`/admin/adopted/${cat.id}`);
 
   return (
@@ -36,6 +41,20 @@ export default async function AdoptCatPage({ params, searchParams }: PageProps<"
         back={{ href: `/admin/cats/${cat.id}`, label: cat.name }}
       />
       <div className="max-w-[760px]">
+        {partners.length > 0 && (
+          <p className="mb-6 rounded-xl border border-line bg-white px-4 py-3 text-sm">
+            {cat.name} is bonded with{" "}
+            {partners.map((p, i) => (
+              <span key={p.id}>
+                {i > 0 && (i === partners.length - 1 ? " and " : ", ")}
+                <Link href={`/admin/cats/${p.id}/adopt`} className="underline">
+                  {p.name}
+                </Link>
+              </span>
+            ))}
+            . Mark them as adopted too once they go home.
+          </p>
+        )}
         <AdoptionForm
           catId={cat.id}
           catName={cat.name}

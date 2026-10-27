@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import type { ApplyState } from "@/lib/application-actions";
 import { looksLikeSpam, parseApplication } from "@/lib/application-validate";
-import { toCatView } from "@/lib/cats";
+import { toCatView, activeBonds } from "@/lib/cats";
 import { createApplication, getDemoDB, useDemoDB } from "@/lib/demo/store";
 import type { ApplicationType } from "@/lib/types";
 import { ApplicationForm } from "../site/ApplicationForm";
@@ -36,7 +36,7 @@ function DemoApplicationFormInner({ type }: { type: ApplicationType }) {
   if (!db) return <div className="h-96 animate-pulse rounded-2xl bg-card" />;
   const cats = db.cats
     .filter((c) => c.status !== "adopted")
-    .map((c) => ({ slug: c.slug, name: c.name, status: c.status }))
+    .map((c) => ({ slug: c.slug, name: c.name, status: c.status, bondedWith: activeBonds(c).map((b) => b.name) }))
     .sort((a, b) => a.name.localeCompare(b.name));
   return (
     <ApplicationForm

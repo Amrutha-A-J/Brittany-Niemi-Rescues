@@ -65,11 +65,24 @@ export function toCatView(cat: Cat, now = new Date()): CatView {
     .map((p) => ({ url: photoUrl(p.path), alt: p.alt || photoAlt(cat, months) }));
   return {
     ...rest,
+    bonded: cat.bonded ?? [],
     photos,
     ageMonths: months,
     ageLabel: formatAge(months),
     category: cat.special_needs ? "special" : ageCategory(months),
   };
+}
+
+/** Bonded partners still looking for a home (an adopted partner no longer ties this cat down). */
+export function activeBonds(cat: Pick<Cat, "bonded">) {
+  return (cat.bonded ?? []).filter((b) => b.status !== "adopted");
+}
+
+export const bondLabel = (partners: number) => (partners === 1 ? "Bonded pair" : "Bonded group");
+
+/** "Pip", "Pip and Rosie", "Pip, Rosie and Bean" */
+export function namesList(names: string[]) {
+  return names.length < 2 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
 }
 
 export function sexLabel(sex: string) {

@@ -27,6 +27,8 @@ export type CatInput = {
   microchipped: boolean;
   adoption_fee: number | null;
   photos: { path: string; alt: string }[];
+  /** Other cats this one must be adopted with. */
+  bonded_ids: string[];
 };
 
 function revalidatePublic(slug?: string) {
@@ -116,6 +118,29 @@ export async function saveCat(input: CatInput): Promise<{ error?: string; id?: s
     await removePhotoFiles(removed.map((p) => p.path));
   } catch (e) {
     return { error: `Saved the cat, but a photo failed: ${e instanceof Error ? e.message : "unknown error"}`, id };
+  }
+
+  // Sync bonds both ways, so a partner's page shows the bond too.
+  try {
+    const partners = [...new Set(input.bonded_ids)].filter((b) => b && b !== catId);
+    const before = await all<{ bonded_id: string }>("select bonded_id from cat_bonds where cat_id = ?", catId);
+    await batch([
+      ["delete from cat_bonds where cat_id = ? or bonded_id = ?", catId, catId],
+      ...partners.flatMap((b): [string, string, string][] => [
+        ["insert or ignore into cat_bonds (cat_id, bonded_id) select ?, id from cats where id = ?", catId, b],
+        ["insert or ignore into cat_bonds (cat_id, bonded_id) select id, ? from cats where id = ?", catId, b],
+      ]),
+    ]);
+    const changed = new Set([...before.map((b) => b.bonded_id), ...partners]);
+    if (changed.size) {
+      const slugs = await all<{ slug: string }>(
+        `select slug from cats where id in (${[...changed].map(() => "?").join(", ")})`,
+        ...changed,
+      );
+      slugs.forEach((s) => revalidatePath(`/cats/${s.slug}`));
+    }
+  } catch (e) {
+    return { error: `Saved the cat, but the bonded cats failed: ${e instanceof Error ? e.message : "unknown error"}`, id };
   }
 
   revalidatePublic(slug);

@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { CatForm } from "@/components/admin/CatForm";
 import { PageHeader } from "@/components/admin/ui";
 import { requireStaff } from "@/lib/admin/session";
-import { CAT_SQL, first, toCat } from "@/lib/db";
+import { CAT_SQL, all, first, toCat } from "@/lib/db";
 
 export const metadata = { title: "Edit cat" };
 
@@ -20,7 +20,10 @@ export default async function EditCatPage({ params }: PageProps<"/admin/cats/[id
   const { id } = await params;
   if (isDemo) return <DemoCatEditor id={id} />;
   await requireStaff();
-  const data = await first(`${CAT_SQL} where c.id = ?`, id);
+  const [data, otherCats] = await Promise.all([
+    first(`${CAT_SQL} where c.id = ?`, id),
+    all<{ id: string; name: string }>("select id, name from cats where status != 'adopted'"),
+  ]);
   if (!data) notFound();
   const cat = toCat(data);
 
@@ -42,7 +45,7 @@ export default async function EditCatPage({ params }: PageProps<"/admin/cats/[id
           </>
         }
       />
-      <CatForm cat={cat} />
+      <CatForm cat={cat} otherCats={otherCats} />
     </>
   );
 }

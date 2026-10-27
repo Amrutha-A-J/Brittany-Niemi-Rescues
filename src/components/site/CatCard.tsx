@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { catSummary, categoryLabel } from "@/lib/cats";
+import { activeBonds, bondLabel, catSummary, categoryLabel } from "@/lib/cats";
 import type { CatView } from "@/lib/types";
 import { CatIllustration } from "./CatIllustration";
 import { links } from "@/lib/links";
@@ -46,8 +46,11 @@ export function CatCard({
             <CatIllustration seed={cat.id} className="h-20 w-20 transition-transform duration-500 group-hover:scale-110" />
           </div>
         )}
-        <div className="absolute left-3 top-3">
+        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           <CatTag cat={cat} />
+          {cat.status !== "adopted" && activeBonds(cat).length > 0 && (
+            <span className="tag">{bondLabel(activeBonds(cat).length)}</span>
+          )}
         </div>
       </div>
       <h3 className="mt-3 font-serif text-[22px] leading-tight">{cat.name}</h3>

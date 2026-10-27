@@ -49,7 +49,8 @@
           "alt": "",
           "position": 2
         }
-      ]
+      ],
+      "bonded": []
     },
     {
       "breed": "Domestic shorthair",
@@ -89,7 +90,8 @@
           "alt": "",
           "position": 1
         }
-      ]
+      ],
+      "bonded": []
     },
     {
       "breed": "Domestic shorthair",
@@ -135,7 +137,8 @@
           "alt": "",
           "position": 2
         }
-      ]
+      ],
+      "bonded": []
     },
     {
       "breed": "Domestic shorthair",
@@ -188,7 +191,8 @@
           "alt": "",
           "position": 3
         }
-      ]
+      ],
+      "bonded": []
     },
     {
       "breed": "Siamese mix",
@@ -229,7 +233,8 @@
           "alt": "",
           "position": 1
         }
-      ]
+      ],
+      "bonded": []
     },
     {
       "breed": "Domestic shorthair",
@@ -275,7 +280,8 @@
           "alt": "",
           "position": 2
         }
-      ]
+      ],
+      "bonded": []
     },
     {
       "breed": "Domestic shorthair",
@@ -321,7 +327,8 @@
           "alt": "",
           "position": 2
         }
-      ]
+      ],
+      "bonded": []
     },
     {
       "breed": "Domestic shorthair",
@@ -367,7 +374,8 @@
           "alt": "",
           "position": 2
         }
-      ]
+      ],
+      "bonded": []
     },
     {
       "breed": "Domestic shorthair",
@@ -412,6 +420,14 @@
           "path": "https://cdn2.thecatapi.com/images/dut.jpg",
           "alt": "",
           "position": 2
+        }
+      ],
+      "bonded": [
+        {
+          "id": "cat-rosie",
+          "name": "Rosie",
+          "slug": "rosie",
+          "status": "available"
         }
       ]
     },
@@ -459,6 +475,14 @@
           "alt": "",
           "position": 2
         }
+      ],
+      "bonded": [
+        {
+          "id": "cat-pip",
+          "name": "Pip",
+          "slug": "pip",
+          "status": "available"
+        }
       ]
     },
     {
@@ -493,7 +517,8 @@
           "alt": "",
           "position": 0
         }
-      ]
+      ],
+      "bonded": []
     }
   ],
   "applications": [

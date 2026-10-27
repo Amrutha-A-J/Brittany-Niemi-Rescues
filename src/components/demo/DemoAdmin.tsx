@@ -460,7 +460,14 @@ export const DemoCatEditor = suspended(function DemoCatEditor({ id: routeId }: {
           )
         }
       />
-      <CatForm key={cat?.id ?? "new"} cat={cat} onSave={saveDemoCat} upload={storeAsDataUrl} maxEdge={1000} />
+      <CatForm
+        key={cat?.id ?? "new"}
+        cat={cat}
+        onSave={saveDemoCat}
+        upload={storeAsDataUrl}
+        maxEdge={1000}
+        otherCats={db.cats.filter((c) => c.status !== "adopted")}
+      />
     </>
   );
 });

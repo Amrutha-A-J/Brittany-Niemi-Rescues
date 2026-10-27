@@ -1,5 +1,6 @@
 "use client";
 
+import { namesList } from "@/lib/cats";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { submitApplication, type ApplyState } from "@/lib/application-actions";
@@ -13,7 +14,7 @@ export function ApplicationForm({
   submit = submitApplication,
 }: {
   type: ApplicationType;
-  cats?: { slug: string; name: string; status: string }[];
+  cats?: { slug: string; name: string; status: string; bondedWith?: string[] }[];
   defaultCat?: string;
   /** Defaults to the real server action; demo mode passes a browser-only one. */
   submit?: (prev: ApplyState, formData: FormData) => Promise<ApplyState>;
@@ -70,6 +71,16 @@ export function ApplicationForm({
               ))}
             </select>
           </label>
+          {(() => {
+            const chosen = cats.find((c) => c.slug === values.cat);
+            if (!chosen?.bondedWith?.length) return null;
+            return (
+              <p className="rounded-xl border border-line px-4 py-3 text-sm leading-relaxed">
+                {chosen.name} is bonded with {namesList(chosen.bondedWith)}, so they go home together. This application
+                covers {chosen.bondedWith.length > 1 ? "all of them" : "both"}.
+              </p>
+            );
+          })()}
           {applicationFields[type]
             .filter((f) => f.group === "cat" && (!f.showIf || f.showIf.values.includes(values[f.showIf.field] ?? "")))
             .map((f) => (

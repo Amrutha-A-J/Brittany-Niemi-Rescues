@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { catSummary } from "@/lib/cats";
+import { catSummary, namesList } from "@/lib/cats";
 import type { ApplicationStatus, CatStatus, CatView } from "@/lib/types";
 
 export function PageHeader({
@@ -97,6 +97,7 @@ export function CatRow({ cat, href, children }: { cat: CatView; href: string; ch
         </div>
         <p className="mt-1 text-sm text-muted">
           {catSummary(cat)} · {cat.photos.length} {cat.photos.length === 1 ? "photo" : "photos"}
+          {cat.bonded.length > 0 && <> · Bonded with {namesList(cat.bonded.map((b) => b.name))}</>}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">{children}</div>
       </div>

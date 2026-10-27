@@ -16,7 +16,7 @@ export type DemoDB = {
 };
 
 // Bump when seed.json changes so visitors get the new sample data.
-const KEY = "bnr-demo-v4";
+const KEY = "bnr-demo-v5";
 const SESSION_KEY = "bnr-demo-session";
 
 const fresh = (): DemoDB =>
@@ -56,7 +56,19 @@ function commit(next: DemoDB) {
 function update(fn: (d: DemoDB) => void) {
   const next = structuredClone(load());
   fn(next);
+  refreshBonds(next);
   commit(next);
+}
+
+/** Keeps each cat's `bonded` list in step with its partners' current name, slug and status. */
+function refreshBonds(d: DemoDB) {
+  const byId = new Map(d.cats.map((c) => [c.id, c]));
+  for (const cat of d.cats) {
+    cat.bonded = (cat.bonded ?? []).flatMap((b) => {
+      const o = byId.get(b.id);
+      return o ? [{ id: o.id, name: o.name, slug: o.slug, status: o.status }] : [];
+    });
+  }
 }
 
 function subscribe(cb: () => void) {
@@ -115,16 +127,17 @@ export const demoLogin = {
 
 /* ----------------------------------------------------------------- cats */
 
-export type DemoCatInput = Omit<Cat, "id" | "slug" | "status" | "created_at" | "updated_at" | "cat_photos"> & {
+export type DemoCatInput = Omit<Cat, "id" | "slug" | "status" | "created_at" | "updated_at" | "cat_photos" | "bonded"> & {
   id?: string;
   status: Exclude<CatStatus, "adopted">;
   photos: { path: string; alt: string }[];
+  bonded_ids: string[];
 };
 
 export function saveCat(input: DemoCatInput): { id: string } {
   let savedId = input.id ?? "";
   update((d) => {
-    const { photos, ...fields } = input;
+    const { photos, bonded_ids, ...fields } = input;
     const cat_photos = photos.map((p, position) => ({ id: id("photo"), path: p.path, alt: p.alt, position }));
     const existing = input.id ? d.cats.find((c) => c.id === input.id) : undefined;
     if (existing) {
@@ -138,7 +151,17 @@ export function saveCat(input: DemoCatInput): { id: string } {
       let slug = base;
       for (let n = 2; d.cats.some((c) => c.slug === slug); n++) slug = `${base}-${n}`;
       savedId = id("cat");
-      d.cats.unshift({ ...fields, id: savedId, slug, cat_photos, created_at: now(), updated_at: now() } as Cat);
+      d.cats.unshift({ ...fields, id: savedId, slug, cat_photos, bonded: [], created_at: now(), updated_at: now() } as Cat);
+    }
+    // Bonds go both ways; refreshBonds fills in the names.
+    const partners = new Set(bonded_ids.filter((b) => b !== savedId));
+    const stub = (catId: string) => ({ id: catId, name: "", slug: "", status: "available" as CatStatus });
+    for (const c of d.cats) {
+      if (c.id === savedId) c.bonded = [...partners].map(stub);
+      else {
+        const others = (c.bonded ?? []).filter((b) => b.id !== savedId);
+        c.bonded = partners.has(c.id) ? [...others, stub(savedId)] : others;
+      }
     }
   });
   return { id: savedId };

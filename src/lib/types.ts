@@ -34,7 +34,11 @@ export type Cat = {
   created_at: string;
   updated_at: string;
   cat_photos: CatPhoto[];
+  /** Cats this one must be adopted with. */
+  bonded: BondedCat[];
 };
+
+export type BondedCat = { id: string; name: string; slug: string; status: CatStatus };
 
 /** A cat ready for display: derived fields are computed on the server. */
 export type CatView = Omit<Cat, "cat_photos"> & {

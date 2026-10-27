@@ -1,6 +1,6 @@
 import "server-only";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import type { Adoption, Application, Cat, CatPhoto, Foster, FosterPlacement, FosterWithPlacements, Meeting } from "./types";
+import type { Adoption, Application, BondedCat, Cat, CatPhoto, Foster, FosterPlacement, FosterWithPlacements, Meeting } from "./types";
 
 /** Cloudflare bindings (D1 database, R2 photo bucket) for this request. */
 export async function cf() {
@@ -67,7 +67,10 @@ const json = <T>(v: unknown, fallback: T): T => (typeof v === "string" ? (JSON.p
 export const CAT_SQL = `select c.*, (
   select json_group_array(json_object('id', p.id, 'path', p.path, 'alt', p.alt, 'position', p.position))
   from cat_photos p where p.cat_id = c.id
-) as cat_photos from cats c`;
+) as cat_photos, (
+  select json_group_array(json_object('id', o.id, 'name', o.name, 'slug', o.slug, 'status', o.status))
+  from cat_bonds b join cats o on o.id = b.bonded_id where b.cat_id = c.id
+) as bonded from cats c`;
 
 export function toCat(row: Raw): Cat {
   return {
@@ -78,6 +81,7 @@ export function toCat(row: Raw): Cat {
     microchipped: Boolean(row.microchipped),
     personality: json<string[]>(row.personality, []),
     cat_photos: json<CatPhoto[]>(row.cat_photos, []),
+    bonded: json<BondedCat[]>(row.bonded, []),
   };
 }
 
