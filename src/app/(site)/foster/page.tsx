@@ -5,7 +5,7 @@ import { getAdoptableCats } from "@/lib/data";
 import { isDemo } from "@/lib/demo/config";
 import { site } from "@/lib/site";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: `Foster a cat in ${site.city}`,

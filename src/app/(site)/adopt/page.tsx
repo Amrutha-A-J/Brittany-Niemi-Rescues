@@ -3,7 +3,7 @@ import { CatBrowser } from "@/components/site/CatBrowser";
 import { getAdoptableCats } from "@/lib/data";
 import { site } from "@/lib/site";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: `Adopt a cat in ${site.city}, ${site.regionCode}`,

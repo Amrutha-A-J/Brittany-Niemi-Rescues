@@ -10,7 +10,7 @@ import { metaDescription } from "@/lib/cats";
 import { getAdoptableCats, getCatBySlug } from "@/lib/data";
 import { site } from "@/lib/site";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   const cats = await getAdoptableCats();

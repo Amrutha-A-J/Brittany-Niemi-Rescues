@@ -12,23 +12,24 @@
       "binding": "DB",
       "database_name": "brittany-niemi-rescues",
       // From `npx wrangler d1 create brittany-niemi-rescues`
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "dc1cef98-2d22-4946-a91e-4289c307adb9",
       "migrations_dir": "migrations"
     },
     {
       // Same database, used by OpenNext to track which cached pages are out of date
       "binding": "NEXT_TAG_CACHE_D1",
       "database_name": "brittany-niemi-rescues",
-      "database_id": "00000000-0000-0000-0000-000000000000"
+      "database_id": "dc1cef98-2d22-4946-a91e-4289c307adb9"
     }
   ],
   "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "brittany-niemi-rescues-photos" }],
-  // Cache for public pages (they refresh every 5 minutes, and right away when a cat is edited)
+  // Cache for public pages (they refresh hourly, and right away when something is edited).
+  // Hourly keeps cache writes well under the free plan's 1,000 KV writes a day.
   "kv_namespaces": [
     {
       "binding": "NEXT_INC_CACHE_KV",
       // From `npx wrangler kv namespace create cache`
-      "id": "00000000000000000000000000000000"
+      "id": "d4a5f0bd7513475bb2a63acea3d9e155"
     }
   ],
   "observability": { "enabled": true },
@@ -39,19 +40,19 @@
         {
           "binding": "DB",
           "database_name": "brittany-niemi-rescues",
-          "database_id": "00000000-0000-0000-0000-000000000000",
+          "database_id": "dc1cef98-2d22-4946-a91e-4289c307adb9",
           "migrations_dir": "migrations",
           "remote": true
         },
         {
           "binding": "NEXT_TAG_CACHE_D1",
           "database_name": "brittany-niemi-rescues",
-          "database_id": "00000000-0000-0000-0000-000000000000",
+          "database_id": "dc1cef98-2d22-4946-a91e-4289c307adb9",
           "remote": true
         }
       ],
       "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "brittany-niemi-rescues-photos" }],
-      "kv_namespaces": [{ "binding": "NEXT_INC_CACHE_KV", "id": "00000000000000000000000000000000" }]
+      "kv_namespaces": [{ "binding": "NEXT_INC_CACHE_KV", "id": "d4a5f0bd7513475bb2a63acea3d9e155" }]
     }
   }
 }

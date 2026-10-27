@@ -6,7 +6,7 @@ import { getAdoptableCats } from "@/lib/data";
 import { SocialIcon } from "@/components/site/SocialIcons";
 import { site, socialLinks } from "@/lib/site";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 const steps = [
   { title: "Find your cat", body: "Browse the cats above and tap any one to read their story." },
