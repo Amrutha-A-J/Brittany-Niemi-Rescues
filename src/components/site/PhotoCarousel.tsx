@@ -98,7 +98,7 @@ export function PhotoCarousel({
               {photos.map((p, i) => (
                 <span
                   key={p.url}
-                  className={`h-1.5 w-1.5 rounded-full ${i === index ? "bg-white" : "bg-white/50"}`}
+                  className={`h-1.5 w-1.5 rounded-full ${i === index ? "bg-[#fff]" : "bg-[#fff]/50"}`}
                 />
               ))}
             </div>
