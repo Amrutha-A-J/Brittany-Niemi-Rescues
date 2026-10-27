@@ -54,6 +54,29 @@ export function googleCalendarUrl(e: CalEvent) {
   return `https://calendar.google.com/calendar/render?${params}`;
 }
 
+/**
+ * Google Maps and Apple Maps links for a meet & greet place. `mapUrl` is the saved Google Maps link
+ * (a pin like ?q=50.69,-104.66, or any other link); without one, both search for the place's name.
+ * A short link (maps.app.goo.gl) can't be read, so Apple Maps then searches for the place instead.
+ */
+export function mapLinks(mapUrl: string, place: string) {
+  let query = "";
+  try {
+    query = mapUrl ? (new URL(mapUrl).searchParams.get("q") ?? "") : "";
+  } catch {}
+  query ||= /^https?:\/\//.test(place) ? "" : place;
+  const pin = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query) ? query.replace(/\s/g, "") : "";
+  const label = place && !/^https?:\/\//.test(place) ? place : "Meet & greet";
+  return {
+    google: mapUrl || (query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : ""),
+    apple: pin
+      ? `https://maps.apple.com/?ll=${pin}&q=${encodeURIComponent(label)}`
+      : query
+        ? `https://maps.apple.com/?q=${encodeURIComponent(query)}`
+        : "",
+  };
+}
+
 /** Outlook.com / Hotmail. Times are UTC, so they show in the reader's own time zone. */
 export function outlookCalendarUrl(e: CalEvent) {
   const end = new Date(e.start.getTime() + e.minutes * 60_000);

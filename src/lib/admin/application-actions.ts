@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { googleCalendarUrl, icsFile, outlookCalendarUrl, parseLocalDateTime, formatDateTime } from "@/lib/calendar";
+import { googleCalendarUrl, icsFile, mapLinks, outlookCalendarUrl, parseLocalDateTime, formatDateTime } from "@/lib/calendar";
 import { namesList } from "@/lib/cats";
 import { button, emailLayout, escapeHtml, rescueInbox, sendEmail, sendTemplate, textToHtml } from "@/lib/email";
 import { APP_CATS_SQL, appCats, first, insertSql, newId, nowIso, run, toApplication } from "@/lib/db";
@@ -120,10 +120,9 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
   const start = parseLocalDateTime(when);
   const minutes = Math.min(240, Math.max(15, Number(fd.get("duration")) || 60));
   const location = text(fd, "location");
-  // A link typed as the place doubles as the map; otherwise search Maps for the place.
-  const mapUrl =
-    text(fd, "map_url") ||
-    (/^https?:\/\//.test(location) ? location : location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}` : "");
+  // A link typed as the place doubles as the map.
+  const maps = mapLinks(text(fd, "map_url") || (/^https?:\/\//.test(location) ? location : ""), location);
+  const mapUrl = maps.google;
   const notes = text(fd, "notes");
 
   const { app, catNames } = await loadApplication(id);
@@ -145,10 +144,13 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
 
   const who = catNames || (app.type === "foster" ? "our foster team" : "our cats");
   const whenText = formatDateTime(start.toISOString());
-  // The place as words; the template links it to map_url. A bare link or a pin alone reads "View on map".
+  // The place as words (a bare link or a pin alone reads "See the map below").
   const isLink = /^https?:\/\//.test(location);
-  const where = location && !isLink ? location : mapUrl ? "View on map" : "Location to be confirmed";
-  const whereHtml = mapUrl ? `<a href="${escapeHtml(mapUrl)}" style="color:#111">${escapeHtml(where)}</a>` : escapeHtml(where);
+  const where = location && !isLink ? location : mapUrl ? "See the map below" : "Location to be confirmed";
+  const link = (href: string, label: string) => `<a href="${escapeHtml(href)}" style="color:#111">${label}</a>`;
+  const whereHtml =
+    escapeHtml(where) +
+    (mapUrl ? `<br>Directions: ${[link(maps.google, "Google Maps"), maps.apple && link(maps.apple, "Apple Maps")].filter(Boolean).join(" · ")}` : "");
   const ics = (e: Parameters<typeof icsFile>[0]) => [{ name: "meet-and-greet.ics", content: Buffer.from(icsFile(e)).toString("base64") }];
 
   // The applicant's calendar entry.
@@ -162,7 +164,7 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
       .filter(Boolean)
       .join("\n"),
   };
-  const shared = { when: whenText, duration: `${minutes} minutes`, location: where, map_url: mapUrl, notes, cat_names: catNames };
+  const shared = { when: whenText, duration: `${minutes} minutes`, location: where, map_url: mapUrl, google_map_url: maps.google, apple_map_url: maps.apple, notes, cat_names: catNames };
   const inbox = await rescueInbox();
 
   let emailNote = "";
