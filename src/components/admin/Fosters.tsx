@@ -5,10 +5,14 @@ import { useActionState, useMemo, useState } from "react";
 import type { FormState } from "@/lib/admin/auth-actions";
 import { formatDate, toLocalInputValue } from "@/lib/calendar";
 import { FOSTER_KINDS, fosterStatusLabel, fosterSummary, type FosterStatus } from "@/lib/fosters";
+import type { PickerCat } from "@/lib/cats";
 import { links } from "@/lib/links";
-import type { Foster, FosterWithPlacements } from "@/lib/types";
+import type { Foster, FosterPlacement, FosterWithPlacements } from "@/lib/types";
 import { FilterBar, filterPanelClass } from "./FilterBar";
 import { ActionForm, ConfirmSubmit, StatusMessage, SubmitButton } from "./Forms";
+import { CatPicker } from "./CatPicker";
+import { Modal } from "./Modal";
+import { Tabs } from "./Tabs";
 import { Card, Empty, PageHeader, rowButton, rowDangerButton } from "./ui";
 import { site } from "@/lib/site";
 
@@ -287,13 +291,25 @@ export function FosterDetail({
 }: {
   foster: FosterWithPlacements;
   /** Cats on the website, for adding to their history. */
-  cats: { id: string; name: string }[];
+  cats: PickerCat[];
   actions: FosterActions;
 }) {
-  const { placements, status, count } = fosterSummary(foster);
+  const { placements, current, status, count } = fosterSummary(foster);
   const [today] = useState(() => toLocalInputValue(new Date().toISOString()).slice(0, 10));
   const [placementState, addPlacementAction] = useActionState(actions.addPlacement, {});
   const catIds = new Set(cats.map((c) => c.id));
+  // Closes after each added batch (the history grows); the form remounts so it starts fresh.
+  const addCats = (
+    <Modal title={`Add cats to ${foster.name}'s history`} closeOn={placements.length} buttonLabel="+ Add cats" buttonClassName={rowButton}>
+      <AddPlacementForm key={placements.length} fosterId={foster.id} cats={cats} today={today} action={addPlacementAction} />
+      <div className="mt-4">
+        <StatusMessage state={placementState} />
+      </div>
+    </Modal>
+  );
+  const row = (p: FosterPlacement) => (
+    <PlacementRow key={p.id} placement={p} foster={foster} linkCat={!!p.cat_id && catIds.has(p.cat_id)} today={today} actions={actions} />
+  );
 
   return (
     <>
@@ -307,130 +323,159 @@ export function FosterDetail({
           </span>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-6">
-          <Card title={`Foster history (${count})`}>
-            {placements.length === 0 ? (
-              <p className="text-sm text-muted">No cats recorded yet.</p>
-            ) : (
-              <ul className="divide-y divide-line">
-                {placements.map((p) => (
-                  <li key={p.id} className="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
-                    <div className="min-w-0">
-                      <p className="flex flex-wrap items-center gap-2">
-                        {p.cat_id && catIds.has(p.cat_id) ? (
-                          <Link href={links.cat(p.cat_id)} className="font-medium underline underline-offset-2">
-                            {p.cat_name}
-                          </Link>
-                        ) : (
-                          <span className="font-medium">{p.cat_name}</span>
-                        )}
-                        {!p.ended_on && <FosterStatusBadge status="fostering" />}
-                      </p>
-                      <p className="text-sm text-muted">
-                        {formatDate(p.started_on)} – {p.ended_on ? formatDate(p.ended_on) : "now"}
-                      </p>
-                      {p.notes && <p className="mt-1 text-sm text-muted">{p.notes}</p>}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {!p.ended_on && (
-                        <form action={actions.endPlacement}>
-                          <input type="hidden" name="id" value={p.id} />
-                          <input type="hidden" name="foster_id" value={foster.id} />
-                          <input type="hidden" name="ended_on" value={today} />
-                          <button className={rowButton}>Mark as returned</button>
-                        </form>
+      <Tabs
+        tabs={[
+          {
+            id: "summary",
+            label: "Summary",
+            content: (
+              <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+                <Card>
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <h2 className="text-sm font-semibold">Contact &amp; address</h2>
+                    <Modal
+                      title={`Edit ${foster.name}`}
+                      closeOn={foster.updated_at}
+                      buttonLabel="Edit"
+                      buttonClassName={rowButton}
+                    >
+                      <FosterDetailsForm key={foster.updated_at} foster={foster} action={actions.save} submitLabel="Save" />
+                    </Modal>
+                  </div>
+                  <dl className="space-y-3 text-sm">
+                    <ContactItem label="Email">
+                      {foster.email && (
+                        <a href={`mailto:${foster.email}`} className="underline underline-offset-2">
+                          {foster.email}
+                        </a>
                       )}
-                      <form action={actions.removePlacement}>
-                        <input type="hidden" name="id" value={p.id} />
-                        <input type="hidden" name="foster_id" value={foster.id} />
-                        <ConfirmSubmit className={rowDangerButton} message={`Remove ${p.cat_name} from ${foster.name}'s history?`}>
-                          Remove
-                        </ConfirmSubmit>
-                      </form>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+                    </ContactItem>
+                    <ContactItem label="Phone">
+                      {foster.phone && (
+                        <a href={`tel:${foster.phone}`} className="underline underline-offset-2">
+                          {foster.phone}
+                        </a>
+                      )}
+                    </ContactItem>
+                    <ContactItem label="Town or city">{foster.city}</ContactItem>
+                    <ContactItem label="Can foster">
+                      {foster.can_foster.length > 0 && <KindTags kinds={foster.can_foster} />}
+                    </ContactItem>
+                    {foster.on_break && <ContactItem label="Availability">On a break</ContactItem>}
+                  </dl>
+                  {foster.notes && <p className="mt-4 whitespace-pre-wrap border-t border-line pt-4 text-sm text-muted">{foster.notes}</p>}
+                  {foster.application_id && (
+                    <Link href={links.application(foster.application_id)} className="mt-4 inline-block text-sm underline underline-offset-2">
+                      View their foster application
+                    </Link>
+                  )}
+                </Card>
 
-          <Card title="Add cats to their history">
-            {/* Remounts after each added cat, so the form starts fresh. */}
-            <AddPlacementForm
-              key={placements.length}
-              fosterId={foster.id}
-              cats={cats}
-              today={today}
-              action={addPlacementAction}
-            />
-            <div className="mt-4">
-              <StatusMessage state={placementState} />
-            </div>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card title="Contact">
-            <dl className="space-y-3 text-sm">
-              {foster.email && (
-                <div>
-                  <dt className="text-xs text-muted">Email</dt>
-                  <dd>
-                    <a href={`mailto:${foster.email}`} className="underline underline-offset-2">
-                      {foster.email}
-                    </a>
-                  </dd>
-                </div>
-              )}
-              {foster.phone && (
-                <div>
-                  <dt className="text-xs text-muted">Phone</dt>
-                  <dd>
-                    <a href={`tel:${foster.phone}`} className="underline underline-offset-2">
-                      {foster.phone}
-                    </a>
-                  </dd>
-                </div>
-              )}
-              {foster.city && (
-                <div>
-                  <dt className="text-xs text-muted">Town or city</dt>
-                  <dd>{foster.city}</dd>
-                </div>
-              )}
-            </dl>
-            {foster.can_foster.length > 0 && (
-              <div className="mt-4">
-                <p className="mb-1.5 text-xs text-muted">Can foster</p>
-                <KindTags kinds={foster.can_foster} />
+                <Card>
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <h2 className="text-sm font-semibold">Fostering now ({current.length})</h2>
+                    {addCats}
+                  </div>
+                  {current.length === 0 ? (
+                    <p className="text-sm text-muted">No cats with them right now.</p>
+                  ) : (
+                    <ul className="divide-y divide-line">{current.map(row)}</ul>
+                  )}
+                </Card>
               </div>
-            )}
-            {foster.notes && <p className="mt-4 whitespace-pre-wrap text-sm text-muted">{foster.notes}</p>}
-          </Card>
-
-          <Card title="Edit details">
-            <FosterDetailsForm key={foster.updated_at} foster={foster} action={actions.save} submitLabel="Save" />
-          </Card>
-
-          {foster.application_id && (
-            <Link href={links.application(foster.application_id)} className="btn-outline w-full">
-              View their foster application
-            </Link>
-          )}
-
-          <form action={actions.remove}>
-            <input type="hidden" name="id" value={foster.id} />
-            <ConfirmSubmit
-              message={`Remove ${foster.name} and their foster history? This can't be undone.`}
-              className="text-sm text-danger underline underline-offset-2"
-            >
-              Remove from fosters
-            </ConfirmSubmit>
-          </form>
-        </div>
-      </div>
+            ),
+          },
+          {
+            id: "history",
+            label: `Foster history (${count})`,
+            content: (
+              <Card className="max-w-3xl">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <h2 className="text-sm font-semibold">All cats they&apos;ve fostered</h2>
+                  {addCats}
+                </div>
+                <StatusMessage state={placementState} />
+                {placements.length === 0 ? (
+                  <p className="text-sm text-muted">No cats recorded yet.</p>
+                ) : (
+                  <ul className="mt-2 divide-y divide-line">{placements.map(row)}</ul>
+                )}
+              </Card>
+            ),
+          },
+        ]}
+      />
+      <form action={actions.remove} className="mt-10 border-t border-line pt-6">
+        <input type="hidden" name="id" value={foster.id} />
+        <ConfirmSubmit
+          message={`Remove ${foster.name} and their foster history? This can't be undone.`}
+          className="text-sm text-danger underline underline-offset-2"
+        >
+          Remove from fosters
+        </ConfirmSubmit>
+      </form>
     </>
+  );
+}
+
+function ContactItem({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-3">
+      <dt className="text-xs leading-5 text-muted">{label}</dt>
+      <dd className="min-w-0 break-words">{children || <span className="text-faint">Not added</span>}</dd>
+    </div>
+  );
+}
+
+function PlacementRow({
+  placement: p,
+  foster,
+  linkCat,
+  today,
+  actions,
+}: {
+  placement: FosterPlacement;
+  foster: Foster;
+  linkCat: boolean;
+  today: string;
+  actions: FosterActions;
+}) {
+  return (
+    <li className="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
+      <div className="min-w-0">
+        <p className="flex flex-wrap items-center gap-2">
+          {linkCat && p.cat_id ? (
+            <Link href={links.cat(p.cat_id)} className="font-medium underline underline-offset-2">
+              {p.cat_name}
+            </Link>
+          ) : (
+            <span className="font-medium">{p.cat_name}</span>
+          )}
+          {!p.ended_on && <FosterStatusBadge status="fostering" />}
+        </p>
+        <p className="text-sm text-muted">
+          {formatDate(p.started_on)} – {p.ended_on ? formatDate(p.ended_on) : "now"}
+        </p>
+        {p.notes && <p className="mt-1 text-sm text-muted">{p.notes}</p>}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {!p.ended_on && (
+          <form action={actions.endPlacement}>
+            <input type="hidden" name="id" value={p.id} />
+            <input type="hidden" name="foster_id" value={foster.id} />
+            <input type="hidden" name="ended_on" value={today} />
+            <button className={rowButton}>Mark as returned</button>
+          </form>
+        )}
+        <form action={actions.removePlacement}>
+          <input type="hidden" name="id" value={p.id} />
+          <input type="hidden" name="foster_id" value={foster.id} />
+          <ConfirmSubmit className={rowDangerButton} message={`Remove ${p.cat_name} from ${foster.name}'s history?`}>
+            Remove
+          </ConfirmSubmit>
+        </form>
+      </div>
+    </li>
   );
 }
 
@@ -441,25 +486,18 @@ function AddPlacementForm({
   action,
 }: {
   fosterId: string;
-  cats: { id: string; name: string }[];
+  cats: PickerCat[];
   today: string;
   action: (formData: FormData) => void;
 }) {
+  const [picked, setPicked] = useState<string[]>([]);
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="foster_id" value={fosterId} />
       {cats.length > 0 && (
         <fieldset>
           <legend className="field-label">Cats on the website</legend>
-          <div className="max-h-56 space-y-2 overflow-y-auto rounded-xl border border-line p-3">
-            {cats.map((c) => (
-              <label key={c.id} className="flex cursor-pointer items-center gap-2 text-sm">
-                <input type="checkbox" name="cat_id" value={c.id} className="h-4 w-4 accent-ink" />
-                {c.name}
-              </label>
-            ))}
-          </div>
-          <span className="field-hint">Tick as many as you like, e.g. a whole litter.</span>
+          <CatPicker cats={cats} selected={picked} onChange={setPicked} name="cat_id" />
         </fieldset>
       )}
       <label className="block">

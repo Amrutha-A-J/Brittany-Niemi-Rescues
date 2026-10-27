@@ -104,7 +104,8 @@ body {
     @apply inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-line bg-white px-4 py-2 text-[13px] text-ink transition-colors hover:border-ink;
   }
   .pill[aria-pressed="true"],
-  .pill[aria-current="page"] {
+  .pill[aria-current="page"],
+  .pill[aria-selected="true"] {
     @apply border-ink bg-ink text-white;
   }
   .field-label {

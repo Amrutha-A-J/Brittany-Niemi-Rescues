@@ -59,6 +59,29 @@ export const applicationFields: Record<ApplicationType, FieldDef[]> = {
   ],
 };
 
+/** The answers shown at a glance on an application's page (short labels); the rest are under "All answers". */
+export const keyAnswers: Record<ApplicationType, { name: string; label: string }[]> = {
+  adopt: [
+    { name: "home_type", label: "Home" },
+    { name: "own_or_rent", label: "Own or rent" },
+    { name: "landlord_ok", label: "Landlord allows cats" },
+    { name: "household", label: "Household" },
+    { name: "other_pets", label: "Other pets" },
+    { name: "indoor_only", label: "Indoors" },
+    { name: "hours_alone", label: "Hours alone" },
+  ],
+  foster: [
+    { name: "home_type", label: "Home" },
+    { name: "own_or_rent", label: "Own or rent" },
+    { name: "household", label: "Household" },
+    { name: "other_pets", label: "Other pets" },
+    { name: "space", label: "Foster space" },
+    { name: "can_foster", label: "Can take" },
+    { name: "duration", label: "How long" },
+    { name: "meds", label: "Medication" },
+  ],
+};
+
 export const applicationTypeLabel: Record<ApplicationType, string> = {
   adopt: "Adoption",
   foster: "Foster",

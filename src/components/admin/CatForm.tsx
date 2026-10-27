@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { saveCat, type CatInput } from "@/lib/admin/cat-actions";
-import { ageInMonths, formatAge, photoUrl } from "@/lib/cats";
+import { ageInMonths, formatAge, namesList, photoUrl, type PickerCat } from "@/lib/cats";
 import type { Cat, YesNoUnknown } from "@/lib/types";
 import { links } from "@/lib/links";
+import { CatPicker } from "./CatPicker";
+import { Modal } from "./Modal";
 
 type Photo = { path: string; alt: string; url: string; uploading?: boolean };
 
@@ -41,7 +43,7 @@ type CatFormProps = {
   /** Longest photo edge in px (demo mode uses smaller photos to fit browser storage). */
   maxEdge?: number;
   /** Cats this one can be bonded with (the rescue's other cats still looking for a home). */
-  otherCats?: { id: string; name: string }[];
+  otherCats?: PickerCat[];
 };
 
 async function uploadToStorage(blob: Blob, path: string) {
@@ -87,7 +89,9 @@ export function CatForm({ cat, onSave = saveCat, upload = uploadToStorage, maxEd
   // Partners that are already adopted aren't in `otherCats`, but the bond is kept.
   const bondChoices = [
     ...otherCats.filter((c) => c.id !== cat?.id),
-    ...(cat?.bonded ?? []).filter((b) => !otherCats.some((c) => c.id === b.id)),
+    ...(cat?.bonded ?? [])
+      .filter((b) => !otherCats.some((c) => c.id === b.id))
+      .map((b): PickerCat => ({ id: b.id, name: b.name, summary: "Adopted" })),
   ].sort((a, b) => a.name.localeCompare(b.name));
   const thisCat = v.name.trim() || "this cat";
   const set = <K extends keyof typeof v>(key: K, value: (typeof v)[K]) => setV((s) => ({ ...s, [key]: value }));
@@ -370,30 +374,34 @@ export function CatForm({ cat, onSave = saveCat, upload = uploadToStorage, maxEd
         </section>
 
         <section className="space-y-3 rounded-2xl border border-line bg-white p-5 sm:p-6">
-          <div>
+          <div className="flex items-center justify-between gap-3">
             <h2 className="text-sm font-semibold">Bonded cats</h2>
-            <p className="mt-1 text-xs text-muted">
-              Does {thisCat} have to go home with another cat? Tick them below. This only links cats that are already on
-              the site; it doesn&apos;t add a new one.
-            </p>
+            <Modal
+              title={`Who does ${thisCat} have to go home with?`}
+              buttonLabel={bondedIds.length ? "Change" : "+ Add"}
+              buttonClassName="btn-outline px-3.5 py-1.5 text-xs"
+            >
+              {bondChoices.length ? (
+                <>
+                  <p className="mb-4 text-sm text-muted">
+                    Tick the cats {thisCat} is bonded with. This links cats already on the site; it doesn&apos;t add a
+                    new one. Both cats&apos; pages will say so. Save the cat to keep the change.
+                  </p>
+                  <CatPicker cats={bondChoices} selected={bondedIds} onChange={setBondedIds} />
+                </>
+              ) : (
+                <p className="text-sm leading-relaxed text-muted">
+                  There are no other cats to pick yet. If {thisCat} has a bonded partner, save {thisCat} first, add the
+                  partner as its own cat, and pick {thisCat} on the partner&apos;s page.
+                </p>
+              )}
+            </Modal>
           </div>
-          {bondChoices.length ? (
-            <div className="max-h-56 space-y-2 overflow-y-auto">
-              {bondChoices.map((c) => (
-                <Check
-                  key={c.id}
-                  label={c.name}
-                  checked={bondedIds.includes(c.id)}
-                  onChange={(on) => setBondedIds((ids) => (on ? [...ids, c.id] : ids.filter((x) => x !== c.id)))}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="rounded-xl bg-card p-3 text-xs leading-relaxed text-muted">
-              There are no other cats to pick yet. If {thisCat} has a bonded partner, save {thisCat} first, add the
-              partner as its own cat, and tick {thisCat} on the partner&apos;s page.
-            </p>
-          )}
+          <p className="text-sm text-muted">
+            {bondedIds.length
+              ? `Goes home with ${namesList(bondChoices.filter((c) => bondedIds.includes(c.id)).map((c) => c.name))}.`
+              : `${thisCat === "this cat" ? "This cat" : thisCat} isn't bonded with another cat.`}
+          </p>
         </section>
 
         {error && (

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ApplicationActions } from "@/components/admin/ApplicationActions";
 import { ActionForm, ConfirmSubmit, SubmitButton } from "@/components/admin/Forms";
 import { ServerMeetingList as MeetingList } from "@/components/admin/ServerMeetingList";
+import { ApplicationSummary } from "@/components/admin/ApplicationSummary";
 import { ApplicationStatusBadge, Card, PageHeader } from "@/components/admin/ui";
 import { deleteApplication, reopenApplication, saveNotes } from "@/lib/admin/application-actions";
 import type { MeetingRow } from "@/lib/admin/meetings";
@@ -12,7 +13,7 @@ import { requireStaff } from "@/lib/admin/session";
 import { formatDate, toLocalInputValue } from "@/lib/calendar";
 import { MEETING_SQL, all, first, nested, toApplication, toMeeting } from "@/lib/db";
 import { applicationListMeta } from "@/lib/admin/application-tabs";
-import { applicationFields, applicationTypeLabel } from "@/lib/forms";
+import { applicationTypeLabel } from "@/lib/forms";
 import { nowMs } from "@/lib/time";
 
 export const metadata = { title: "Application" };
@@ -57,7 +58,25 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
         actions={<ApplicationStatusBadge status={app.status} />}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+        <div className="space-y-6">
+          <ApplicationSummary app={app} cat={
+              app.cats ? (
+                <Link href={`/admin/cats/${app.cats.id}`} className="underline underline-offset-2">
+                  {app.cats.name}
+                </Link>
+              ) : app.type === "adopt" ? (
+                "No specific cat"
+              ) : (
+                "Open to any cat"
+              )
+            } />
+          {meetings && meetings.length > 0 && (
+            <Card title="Meet & greets">
+              <MeetingList meetings={meetings} showApplicant={false} />
+            </Card>
+          )}
+        </div>
         <div className="space-y-6">
           <Card title="Next step">
             <ApplicationActions
@@ -80,71 +99,6 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
               </Link>
             )}
           </Card>
-
-          {meetings && meetings.length > 0 && (
-            <Card title="Meet & greets">
-              <MeetingList meetings={meetings} showApplicant={false} />
-            </Card>
-          )}
-
-          <Card title="Their answers">
-            <dl className="space-y-5">
-              {applicationFields[app.type]
-                .filter((f) => app.answers[f.name] !== undefined)
-                .map((f) => {
-                  const v = app.answers[f.name];
-                  const value = Array.isArray(v) ? v.join(", ") : v;
-                  return (
-                    <div key={f.name}>
-                      <dt className="text-xs text-muted">{f.label}</dt>
-                      <dd className="mt-0.5 whitespace-pre-wrap text-[15px]">{value || "—"}</dd>
-                    </div>
-                  );
-                })}
-            </dl>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card title="Contact">
-            <dl className="space-y-3 text-sm">
-              <div>
-                <dt className="text-xs text-muted">Email</dt>
-                <dd>
-                  <a href={`mailto:${app.email}`} className="underline underline-offset-2">
-                    {app.email}
-                  </a>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted">Phone</dt>
-                <dd>
-                  <a href={`tel:${app.phone}`} className="underline underline-offset-2">
-                    {app.phone}
-                  </a>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted">Town or city</dt>
-                <dd>{app.city}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted">Cat</dt>
-                <dd>
-                  {app.cats ? (
-                    <Link href={`/admin/cats/${app.cats.id}`} className="underline underline-offset-2">
-                      {app.cats.name}
-                    </Link>
-                  ) : app.type === "adopt" ? (
-                    "No specific cat"
-                  ) : (
-                    "Open to any cat"
-                  )}
-                </dd>
-              </div>
-            </dl>
-          </Card>
-
           <Card title="Private notes">
             <ActionForm action={saveNotes}>
               <input type="hidden" name="id" value={app.id} />
@@ -152,7 +106,6 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
               <SubmitButton className="btn-outline">Save notes</SubmitButton>
             </ActionForm>
           </Card>
-
           <form action={deleteApplication}>
             <input type="hidden" name="id" value={app.id} />
             <ConfirmSubmit message="Delete this application permanently?" className="text-sm text-danger underline underline-offset-2">

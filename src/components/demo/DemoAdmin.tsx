@@ -11,7 +11,7 @@ import type { FormState } from "@/lib/admin/auth-actions";
 import type { CatInput } from "@/lib/admin/cat-actions";
 import type { MeetingRow } from "@/lib/admin/meetings";
 import { formatDate, icsFile, parseLocalDateTime, toLocalInputValue } from "@/lib/calendar";
-import { catSummary, photoUrl, toCatView } from "@/lib/cats";
+import { catSummary, photoUrl, toCatView, toPickerCat } from "@/lib/cats";
 import {
   blobToDataUrl,
   deleteCat,
@@ -29,7 +29,7 @@ import {
   useDemoDB,
   type DemoDB,
 } from "@/lib/demo/store";
-import { applicationFields, applicationTypeLabel } from "@/lib/forms";
+import { applicationTypeLabel } from "@/lib/forms";
 import { meetingEvent } from "@/lib/admin/meetings";
 import type { Adoption, Application, ApplicationType } from "@/lib/types";
 import { APPLICATION_TABS, applicationListMeta } from "@/lib/admin/application-tabs";
@@ -42,6 +42,8 @@ import { CatForm } from "../admin/CatForm";
 import { FilterableCatList } from "../admin/FilterableCatList";
 import { ActionForm, PasswordInput, SubmitButton } from "../admin/Forms";
 import { MeetingList } from "../admin/MeetingList";
+import { ApplicationSummary } from "../admin/ApplicationSummary";
+import { Tabs } from "../admin/Tabs";
 import { ApplicationStatusBadge, Card, CatRow, Empty, PageHeader, rowButton, rowDangerButton, Thumb } from "../admin/ui";
 import { Logo } from "../site/Logo";
 import { links } from "@/lib/links";
@@ -471,7 +473,10 @@ export const DemoCatEditor = suspended(function DemoCatEditor({ id: routeId }: {
         onSave={saveDemoCat}
         upload={storeAsDataUrl}
         maxEdge={1000}
-        otherCats={db.cats.filter((c) => c.status !== "adopted")}
+        otherCats={db.cats
+          .filter((c) => c.status !== "adopted")
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((c) => toPickerCat(toCatView(c)))}
       />
     </>
   );
@@ -655,7 +660,25 @@ export const DemoApplication = suspended(function DemoApplication({ id: routeId 
         description={`${applicationTypeLabel[app.type]} application · received ${formatDate(app.created_at)}`}
         actions={<ApplicationStatusBadge status={app.status} />}
       />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+        <div className="space-y-6">
+          <ApplicationSummary app={app} cat={
+              cat ? (
+                <Link href={links.cat(cat.id)} className="underline underline-offset-2">
+                  {cat.name}
+                </Link>
+              ) : app.type === "adopt" ? (
+                "No specific cat"
+              ) : (
+                "Open to any cat"
+              )
+            } />
+          {meetings.length > 0 && (
+            <Card title="Meet & greets">
+              <MeetingList meetings={meetings} showApplicant={false} setStatus={setMeetingStatusAction} icsHref={icsHref} />
+            </Card>
+          )}
+        </div>
         <div className="space-y-6">
           <Card title="Next step">
             <ApplicationActions
@@ -680,66 +703,6 @@ export const DemoApplication = suspended(function DemoApplication({ id: routeId 
                 Finalise adoption of {cat.name} →
               </Link>
             )}
-          </Card>
-          {meetings.length > 0 && (
-            <Card title="Meet & greets">
-              <MeetingList meetings={meetings} showApplicant={false} setStatus={setMeetingStatusAction} icsHref={icsHref} />
-            </Card>
-          )}
-          <Card title="Their answers">
-            <dl className="space-y-5">
-              {applicationFields[app.type]
-                .filter((f) => app.answers[f.name] !== undefined)
-                .map((f) => {
-                  const v = app.answers[f.name];
-                  return (
-                    <div key={f.name}>
-                      <dt className="text-xs text-muted">{f.label}</dt>
-                      <dd className="mt-0.5 whitespace-pre-wrap text-[15px]">{(Array.isArray(v) ? v.join(", ") : v) || "—"}</dd>
-                    </div>
-                  );
-                })}
-            </dl>
-          </Card>
-        </div>
-        <div className="space-y-6">
-          <Card title="Contact">
-            <dl className="space-y-3 text-sm">
-              <div>
-                <dt className="text-xs text-muted">Email</dt>
-                <dd>
-                  <a href={`mailto:${app.email}`} className="underline underline-offset-2">
-                    {app.email}
-                  </a>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted">Phone</dt>
-                <dd>
-                  <a href={`tel:${app.phone}`} className="underline underline-offset-2">
-                    {app.phone}
-                  </a>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted">Town or city</dt>
-                <dd>{app.city}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted">Cat</dt>
-                <dd>
-                  {cat ? (
-                    <Link href={links.cat(cat.id)} className="underline underline-offset-2">
-                      {cat.name}
-                    </Link>
-                  ) : app.type === "adopt" ? (
-                    "No specific cat"
-                  ) : (
-                    "Open to any cat"
-                  )}
-                </dd>
-              </div>
-            </dl>
           </Card>
           <Card title="Private notes">
             <ActionForm
@@ -895,67 +858,81 @@ export const DemoAdoptedCat = suspended(function DemoAdoptedCat({ id: routeId }:
           </Link>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="min-w-0">
-          <AdoptionForm
-            catId={cat.id}
-            catName={cat.name}
-            record={adoption}
-            applicants={applicantOptions(db, cat.id)}
-            defaultFee={cat.adoption_fee}
-            isNew={false}
-            action={adoptionAction(cat.id)}
-          />
-        </div>
-        <div className="space-y-6">
-          <Card title="Photos">
-            {cat.photos.length ? (
-              <div className="grid grid-cols-3 gap-2">
-                {cat.photos.map((p) => (
-                  <a key={p.url} href={p.url} target="_blank" rel="noopener">
-                    <Thumb url={p.url} alt={p.alt} size={88} />
-                  </a>
-                ))}
+      <Tabs
+        tabs={[
+          {
+            id: "record",
+            label: "Adoption record",
+            content: (
+              <div className="max-w-3xl">
+                <AdoptionForm
+                  catId={cat.id}
+                  catName={cat.name}
+                  record={adoption}
+                  applicants={applicantOptions(db, cat.id)}
+                  defaultFee={cat.adoption_fee}
+                  isNew={false}
+                  action={adoptionAction(cat.id)}
+                />
               </div>
-            ) : (
-              <p className="text-sm text-muted">No photos.</p>
-            )}
-          </Card>
-          <Card title="Cat details">
-            <dl className="space-y-2 text-sm">
-              {[
-                ["Breed", cat.breed],
-                ["Spayed / neutered", cat.spayed_neutered ? "Yes" : "No"],
-                ["Vaccinated", cat.vaccinated ? "Yes" : "No"],
-                ["Microchipped", cat.microchipped ? "Yes" : "No"],
-                ...(cat.special_needs ? [["Special care", cat.special_needs_notes || "Yes"]] : []),
-              ].map(([label, value]) => (
-                <div key={label} className="flex justify-between gap-4">
-                  <dt className="text-muted">{label}</dt>
-                  <dd className="text-right">{value}</dd>
-                </div>
-              ))}
-            </dl>
-            {cat.description && <p className="mt-4 text-sm text-muted">{cat.description}</p>}
-          </Card>
-          {adoption?.application_id && (
-            <Link href={links.application(adoption.application_id)} className="btn-outline w-full">
-              View their application
-            </Link>
-          )}
-          <button
-            className="text-sm text-danger underline underline-offset-2"
-            onClick={() => {
-              if (window.confirm(`Put ${cat.name} back on the website as available? The adoption record will be deleted.`)) {
-                returnToAvailable(cat.id);
-                router.push(links.cat(cat.id));
-              }
-            }}
-          >
-            Adoption fell through? Return to available
-          </button>
-        </div>
-      </div>
+            ),
+          },
+          {
+            id: "cat",
+            label: "About the cat",
+            content: (
+              <div className="max-w-xl space-y-6">
+                <Card title="Photos">
+                  {cat.photos.length ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {cat.photos.map((p) => (
+                        <a key={p.url} href={p.url} target="_blank" rel="noopener">
+                          <Thumb url={p.url} alt={p.alt} size={88} />
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted">No photos.</p>
+                  )}
+                </Card>
+                <Card title="Cat details">
+                  <dl className="space-y-2 text-sm">
+                    {[
+                      ["Breed", cat.breed],
+                      ["Spayed / neutered", cat.spayed_neutered ? "Yes" : "No"],
+                      ["Vaccinated", cat.vaccinated ? "Yes" : "No"],
+                      ["Microchipped", cat.microchipped ? "Yes" : "No"],
+                      ...(cat.special_needs ? [["Special care", cat.special_needs_notes || "Yes"]] : []),
+                    ].map(([label, value]) => (
+                      <div key={label} className="flex justify-between gap-4">
+                        <dt className="text-muted">{label}</dt>
+                        <dd className="text-right">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {cat.description && <p className="mt-4 text-sm text-muted">{cat.description}</p>}
+                </Card>
+                {adoption?.application_id && (
+                  <Link href={links.application(adoption.application_id)} className="btn-outline w-full">
+                    View their application
+                  </Link>
+                )}
+                <button
+                  className="text-sm text-danger underline underline-offset-2"
+                  onClick={() => {
+                    if (window.confirm(`Put ${cat.name} back on the website as available? The adoption record will be deleted.`)) {
+                      returnToAvailable(cat.id);
+                      router.push(links.cat(cat.id));
+                    }
+                  }}
+                >
+                  Adoption fell through? Return to available
+                </button>
+              </div>
+            ),
+          },
+        ]}
+      />
     </>
   );
 });

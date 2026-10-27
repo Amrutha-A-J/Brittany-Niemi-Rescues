@@ -15,6 +15,7 @@ import {
   useDemoDB,
   type DemoFosterInput,
 } from "@/lib/demo/store";
+import { toCatView, toPickerCat } from "@/lib/cats";
 import { FOSTER_KINDS, catNames, placementCats } from "@/lib/fosters";
 import { links } from "@/lib/links";
 import { FosterDetail, FosterDetailsForm, FosterList } from "../admin/Fosters";
@@ -104,7 +105,10 @@ function DemoFosterInner({ routeId }: { routeId: string }) {
   return (
     <FosterDetail
       foster={{ ...foster, foster_placements: db.foster_placements.filter((p) => p.foster_id === foster.id) }}
-      cats={db.cats.filter((c) => c.status !== "adopted").map((c) => ({ id: c.id, name: c.name }))}
+      cats={db.cats
+        .filter((c) => c.status !== "adopted")
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((c) => toPickerCat(toCatView(c)))}
       actions={{
         save: async (_p, fd) => {
           const input = readFoster(fd);
