@@ -41,7 +41,7 @@
   ],
   // Email settings (not secret). The Brevo API key is a secret: `npx wrangler secret put BREVO_API_KEY`
   "vars": {
-    "EMAIL_FROM": "hello@bnrescues.com",
+    "EMAIL_FROM": "mail@bnrescues.com",
     "EMAIL_FROM_NAME": "Brittany Niemi Rescues",
     "RESCUE_NOTIFY_EMAIL": "brittany.niemi.rescues@outlook.com"
   },
