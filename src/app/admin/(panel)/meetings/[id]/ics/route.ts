@@ -11,7 +11,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/admin/meetings/[id]
   return new Response(icsFile(meetingEvent(toMeeting(data) as MeetingRow)), {
     headers: {
       "content-type": "text/calendar; charset=utf-8",
-      "content-disposition": `attachment; filename="meet-and-greet.ics"`,
+      "content-disposition": `inline; filename="meet-and-greet.ics"`,
     },
   });
 }

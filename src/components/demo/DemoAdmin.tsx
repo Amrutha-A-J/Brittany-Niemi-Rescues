@@ -638,6 +638,7 @@ function decisionActions(app: Application, db: DemoDB) {
         starts_at: parseLocalDateTime(when).toISOString(),
         duration_minutes: Number(fd.get("duration")) || 60,
         location: text(fd, "location"),
+        map_url: text(fd, "map_url"),
         notes: text(fd, "notes"),
       });
       return { ok: true, message: `Meet & greet scheduled.${fd.get("send_email") === "on" ? EMAIL_NOTE : ""}` };

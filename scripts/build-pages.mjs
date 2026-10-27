@@ -19,6 +19,7 @@ const SERVER_ONLY = [
   "src/app/admin/upload/route.ts",
   "src/app/photos/[...path]/route.ts",
   "src/app/admin/(panel)/meetings/[id]/ics/route.ts",
+  "src/app/calendar/[file]/route.ts",
 ];
 const stash = ".pages-stash";
 

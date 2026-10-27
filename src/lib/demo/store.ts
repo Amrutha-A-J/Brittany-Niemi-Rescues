@@ -215,7 +215,7 @@ export function deleteApplication(appId: string) {
 
 /* ------------------------------------------------------------- meetings */
 
-export function scheduleMeeting(m: Pick<Meeting, "application_id" | "starts_at" | "duration_minutes" | "location" | "notes">) {
+export function scheduleMeeting(m: Pick<Meeting, "application_id" | "starts_at" | "duration_minutes" | "location" | "map_url" | "notes">) {
   update((d) => {
     d.meetings.push({ ...m, id: id("meet"), status: "scheduled", created_at: now() });
     const app = d.applications.find((a) => a.id === m.application_id);

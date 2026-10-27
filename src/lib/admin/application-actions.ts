@@ -9,6 +9,7 @@ import { APP_CATS_SQL, appCats, first, insertSql, newId, nowIso, run, toApplicat
 import { site } from "@/lib/site";
 import type { FormState } from "./auth-actions";
 import { ensureFosterFromApplication } from "./fosters-db";
+import { inviteEvent, inviteIcsUrl } from "./meetings";
 import { assertStaff } from "./session";
 
 const on = (fd: FormData, name: string) => fd.get(name) === "on";
@@ -128,7 +129,15 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
   const { app, catNames } = await loadApplication(id);
   const meeting = { id: newId() };
   await run(
-    ...insertSql("meetings", { id: meeting.id, application_id: id, starts_at: start.toISOString(), duration_minutes: minutes, location, notes }),
+    ...insertSql("meetings", {
+      id: meeting.id,
+      application_id: id,
+      starts_at: start.toISOString(),
+      duration_minutes: minutes,
+      location,
+      map_url: mapUrl,
+      notes,
+    }),
   );
   if (app.status === "new") {
     await run("update applications set status = 'meet_scheduled' where id = ?", id);
@@ -141,16 +150,7 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
   const ics = (e: Parameters<typeof icsFile>[0]) => [{ name: "meet-and-greet.ics", content: Buffer.from(icsFile(e)).toString("base64") }];
 
   // The applicant's calendar entry.
-  const invite = {
-    uid: meeting.id,
-    title: `Meet & greet with ${who} (${site.name})`,
-    start,
-    minutes,
-    location,
-    description: [`Meet & greet with ${site.name}${catNames ? ` to meet ${catNames}` : ""}.`, notes, mapUrl && `Map: ${mapUrl}`]
-      .filter(Boolean)
-      .join("\n\n"),
-  };
+  const invite = inviteEvent({ id: meeting.id, start, minutes, location, notes, mapUrl, who, catNames });
   // The rescue's calendar entry, with the applicant's contact details.
   const booked = {
     ...invite,
@@ -176,6 +176,7 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
         who,
         google_calendar_url: googleCalendarUrl(invite),
         outlook_calendar_url: outlookCalendarUrl(invite),
+        apple_calendar_url: inviteIcsUrl(meeting.id),
       },
       fallback: {
         subject: `Your meet & greet${catNames ? ` with ${catNames}` : ""}: ${whenText}`,
@@ -185,8 +186,7 @@ export async function scheduleMeeting(_prev: FormState, fd: FormData): Promise<F
 <p><strong>${escapeHtml(whenText)}</strong> (${minutes} minutes)<br>${escapeHtml(where)}</p>
 ${mapButton && `<p>${mapButton}</p>`}
 ${notes ? textToHtml(notes) : ""}
-<p>${button(googleCalendarUrl(invite), "Add to Google Calendar")}${button(outlookCalendarUrl(invite), "Add to Outlook")}</p>
-<p style="font-size:13px;color:#666">Using Apple Calendar? Open the attached <em>meet-and-greet.ics</em> file.</p>
+<p>${button(googleCalendarUrl(invite), "Add to Google Calendar")}${button(outlookCalendarUrl(invite), "Add to Outlook")}${button(inviteIcsUrl(meeting.id), "Add to Apple Calendar")}</p>
 <p>If the time doesn't work, just reply to this email.</p>
 <p>${escapeHtml(site.name)}</p>`,
         ),
@@ -209,6 +209,7 @@ ${notes ? textToHtml(notes) : ""}
         application_url: `${site.url}/admin/applications/${id}`,
         google_calendar_url: googleCalendarUrl(booked),
         outlook_calendar_url: outlookCalendarUrl(booked),
+        apple_calendar_url: `${site.url}/admin/meetings/${meeting.id}/ics`,
       },
       fallback: {
         subject: `Meet & greet booked: ${app.name}, ${whenText}`,
@@ -218,7 +219,7 @@ ${notes ? textToHtml(notes) : ""}
 ${mapButton && `<p>${mapButton}</p>`}
 <p>${escapeHtml(app.phone)}<br>${escapeHtml(app.email)}</p>
 ${notes ? textToHtml(notes) : ""}
-<p>${button(googleCalendarUrl(booked), "Add to Google Calendar")}${button(outlookCalendarUrl(booked), "Add to Outlook")}</p>
+<p>${button(googleCalendarUrl(booked), "Add to Google Calendar")}${button(outlookCalendarUrl(booked), "Add to Outlook")}${button(`${site.url}/admin/meetings/${meeting.id}/ics`, "Add to Apple Calendar")}</p>
 <p>${button(`${site.url}/admin/applications/${id}`, "Open the application")}</p>`,
         ),
       },

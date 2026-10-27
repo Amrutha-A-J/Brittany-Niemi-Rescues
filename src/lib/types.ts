@@ -78,6 +78,8 @@ export type Meeting = {
   starts_at: string;
   duration_minutes: number;
   location: string;
+  /** Google Maps link for the place ('' when there isn't one). */
+  map_url: string;
   notes: string;
   status: MeetingStatus;
   created_at: string;
