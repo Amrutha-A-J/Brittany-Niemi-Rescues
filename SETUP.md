@@ -99,12 +99,9 @@ npx wrangler kv namespace create cache                 # prints an id
    npm run db:migrate:remote
    npm run staff:add -- her@email.com --remote
    ```
-3. Add the email settings as Worker secrets (each command asks for the value):
+3. Add the Brevo API key as a Worker secret (it asks for the value). The other email settings are `vars` in `wrangler.jsonc`.
    ```bash
    npx wrangler secret put BREVO_API_KEY
-   npx wrangler secret put EMAIL_FROM
-   npx wrangler secret put EMAIL_FROM_NAME
-   npx wrangler secret put RESCUE_NOTIFY_EMAIL
    ```
 4. Deploy: `npm run deploy` (see `scripts/deploy.mjs`). It attaches bnrescues.com and www.bnrescues.com
    (www redirects to the main domain), with DNS and HTTPS set up by Cloudflare.
@@ -136,7 +133,7 @@ npx wrangler kv namespace create cache                 # prints an id
 The app sends these emails:
 - To the applicant: confirmation of their application, approved, not a match (optional), and a meet & greet invite with an "Add to Google Calendar" button and an `.ics` file for Apple Calendar and Outlook
 - To the rescue: new application, and meet & greet booked
-- To staff: password reset links
+- To staff: password reset links, using Brevo template #1. Edit its wording and design in Brevo; its button must link to `{{ params.link }}`.
 
 ---
 

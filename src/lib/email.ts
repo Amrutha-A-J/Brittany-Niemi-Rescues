@@ -38,13 +38,16 @@ const isEmailConfigured = () => Boolean(process.env.BREVO_API_KEY && process.env
  */
 export async function sendEmail(opts: {
   to: { email: string; name?: string };
-  subject: string;
-  html: string;
   replyTo?: { email: string; name?: string };
   attachments?: Attachment[];
-}): Promise<{ ok: boolean; skipped?: boolean }> {
+} & (
+  | { subject: string; html: string }
+  // A template saved in Brevo; its subject and design live there, and `params` fill its {{ params.x }} placeholders.
+  | { templateId: number; params?: Record<string, string> }
+)): Promise<{ ok: boolean; skipped?: boolean }> {
   if (!isEmailConfigured()) {
-    console.info(`[email skipped: Brevo not configured] to=${opts.to.email} subject="${opts.subject}"`);
+    const what = "templateId" in opts ? `template=${opts.templateId}` : `subject="${opts.subject}"`;
+    console.info(`[email skipped: Brevo not configured] to=${opts.to.email} ${what}`);
     return { ok: false, skipped: true };
   }
   try {
@@ -58,8 +61,9 @@ export async function sendEmail(opts: {
       body: JSON.stringify({
         sender: { email: process.env.EMAIL_FROM, name: process.env.EMAIL_FROM_NAME || site.name },
         to: [opts.to],
-        subject: opts.subject,
-        htmlContent: opts.html,
+        ...("templateId" in opts
+          ? { templateId: opts.templateId, params: opts.params }
+          : { subject: opts.subject, htmlContent: opts.html }),
         replyTo: opts.replyTo,
         attachment: opts.attachments?.length ? opts.attachments : undefined,
       }),

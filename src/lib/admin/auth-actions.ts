@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { first, run } from "@/lib/db";
-import { button, emailLayout, sendEmail } from "@/lib/email";
+import { sendEmail } from "@/lib/email";
 import { site } from "@/lib/site";
 import { createResetToken, endOtherSessions, endSession, hashPassword, startSession, verifyPassword } from "./auth";
 import { requireStaff, safeNext } from "./session";
@@ -31,14 +31,11 @@ export async function requestPasswordReset(_prev: FormState, formData: FormData)
   const staff = await first<{ id: string; email: string }>("select id, email from staff where email = ?", email);
   if (staff) {
     const token = await createResetToken(staff.id);
+    // Brevo template #1 ("Reset password"): its button links to {{ params.link }}. The link works once, for one hour.
     const res = await sendEmail({
       to: { email: staff.email },
-      subject: `Reset your ${site.name} password`,
-      html: emailLayout(
-        `<p>Someone (hopefully you) asked to reset the password for the rescue login.</p>
-<p>${button(`${site.url}/auth/confirm?token=${token}`, "Choose a new password")}</p>
-<p style="font-size:13px;color:#666">The link works once, for one hour. If you didn't ask for this, you can ignore this email.</p>`,
-      ),
+      templateId: 1,
+      params: { link: `${site.url}/auth/confirm?token=${token}` },
     });
     if (!res.ok) console.error("[password reset] email not sent");
   }
