@@ -8,6 +8,7 @@ import { getAdoptableCats } from "@/lib/data";
 import { SocialIcon } from "@/components/site/SocialIcons";
 import { site, socialLinks } from "@/lib/site";
 import { getSiteText } from "@/lib/site-text";
+import { ScrollLink } from "@/components/site/ScrollLink";
 
 export const revalidate = 3600;
 
@@ -56,9 +57,9 @@ export default async function HomePage() {
         </h1>
         <p className="mx-auto mt-6 max-w-[440px] text-[15px] leading-relaxed text-muted">{text.heroIntro}</p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="#cats" className="btn-primary">
+          <ScrollLink to="cats" className="btn-primary">
             Meet the cats
-          </Link>
+          </ScrollLink>
           <Link href="/foster" className="btn-outline">
             Foster with us
           </Link>
