@@ -25,3 +25,7 @@ with fixed attribution text in the site content or developer-credit configuratio
 
 The footer monogram is 48px tall on phones and 56px on desktop, using the existing Logo
 component so the vector stays crisp. The header logo keeps its separate size.
+
+On mobile, the footer stacks the logo, social icons, rescue location, copyright and
+developer credit in centered rows. Desktop keeps the metadata beside the larger logo
+and the developer credit aligned to the right below it.

@@ -7,11 +7,11 @@ import { SocialIcons } from "./SocialIcons";
 export function Footer() {
   return (
     <footer className="container-page mt-auto">
-      <div className="flex flex-col gap-4 border-t border-line py-10 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col items-center gap-4 border-t border-line py-10 text-center sm:flex-row sm:justify-between sm:text-left">
         <Link href="/" aria-label={`${site.name} home`}>
           <Logo className="h-12 sm:h-14" />
         </Link>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-muted">
+        <div className="flex flex-col items-center gap-3 text-xs text-muted sm:flex-row sm:flex-wrap sm:justify-end sm:gap-x-6">
           <SocialIcons />
           <span>
             Cat rescue in {site.city}, {site.region}
