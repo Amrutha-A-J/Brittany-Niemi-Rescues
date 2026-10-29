@@ -13,3 +13,12 @@ npm run dev:demo     # browser-only demo with sample data, http://localhost:3001
 ```
 
 Setup, deploying and costs: [SETUP.md](SETUP.md).
+
+## Footer signature
+
+The footer uses Ami's original pen strokes for "by Ami", alongside regular caption text.
+"At pixelmoose.ca" stays on its own second line at every width; the credit is centered on
+phones and aligned to the start on desktop. The whole credit links to https://pixelmoose.ca
+and has a full accessible name and keyboard focus outline. The inline SVG uses currentColor
+so its color follows each site's light and dark theme. DeveloperCredit owns the markup,
+with fixed attribution text in the site content or developer-credit configuration module.
