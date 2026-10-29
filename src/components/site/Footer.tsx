@@ -9,7 +9,7 @@ export function Footer() {
     <footer className="container-page mt-auto">
       <div className="flex flex-col gap-4 border-t border-line py-10 sm:flex-row sm:items-center sm:justify-between">
         <Link href="/" aria-label={`${site.name} home`}>
-          <Logo size={24} />
+          <Logo className="h-12 sm:h-14" />
         </Link>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-muted">
           <SocialIcons />

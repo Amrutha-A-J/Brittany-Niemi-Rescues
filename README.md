@@ -22,3 +22,6 @@ phones and aligned to the right on desktop. The whole credit links to https://pi
 and has a full accessible name and keyboard focus outline. The inline SVG uses currentColor
 so its color follows each site's light and dark theme. DeveloperCredit owns the markup,
 with fixed attribution text in the site content or developer-credit configuration module.
+
+The footer monogram is 48px tall on phones and 56px on desktop, using the existing Logo
+component so the vector stays crisp. The header logo keeps its separate size.
