@@ -21,7 +21,7 @@ export function Footer() {
           </span>
         </div>
       </div>
-      <div className="pb-8 text-center text-[11px] text-muted sm:text-left">
+      <div className="pb-8 text-center text-[11px] text-muted sm:text-right">
         <DeveloperCredit />
       </div>
     </footer>

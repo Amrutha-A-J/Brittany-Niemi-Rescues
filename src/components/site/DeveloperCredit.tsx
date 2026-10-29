@@ -26,7 +26,7 @@ export function DeveloperCredit() {
           <path d="M3207 1133 c-4 -3 -7 -40 -7 -82 0 -42 -5 -172 -12 -289 -13 -226 -9 -257 29 -220 18 19 29 72 43 208 5 52 13 115 18 139 13 58 4 200 -14 229 -14 21 -43 29 -57 15z" />
         </g>
       </svg>
-      <span className="col-span-full inline-flex justify-center gap-1 sm:justify-start">
+      <span className="col-span-full inline-flex justify-center gap-1 sm:justify-end">
         <span>{developerCredit.connector}</span>
         <span className="underline underline-offset-2">{developerCredit.domain}</span>
       </span>
