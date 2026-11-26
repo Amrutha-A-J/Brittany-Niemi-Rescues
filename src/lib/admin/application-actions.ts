@@ -6,6 +6,8 @@ import { googleCalendarUrl, icsFile, mapLinks, outlookCalendarUrl, parseLocalDat
 import { namesList } from "@/lib/cats";
 import { button, emailLayout, escapeHtml, rescueInbox, sendEmail, sendTemplate, textToHtml } from "@/lib/email";
 import { APP_CATS_SQL, appCats, first, insertSql, newId, nowIso, run, toApplication } from "@/lib/db";
+import { applicationPdf } from "@/lib/application-copy";
+import { applicationTypeLabel } from "@/lib/forms";
 import { site } from "@/lib/site";
 import type { FormState } from "./auth-actions";
 import { ensureFosterFromApplication } from "./fosters-db";
@@ -37,6 +39,27 @@ export async function saveNotes(_prev: FormState, fd: FormData): Promise<FormSta
   await run("update applications set admin_notes = ? where id = ?", text(fd, "notes"), text(fd, "id"));
   refresh(text(fd, "id"));
   return { message: "Notes saved." };
+}
+
+/** Emails the application (with a printable PDF) to the rescue's inbox again. */
+export async function resendApplicationCopy(_prev: FormState, fd: FormData): Promise<FormState> {
+  const { app, catNames } = await loadApplication(text(fd, "id"));
+  const inbox = await rescueInbox();
+  if (!inbox) return { error: "No rescue email is set. Add one under Admin → Account." };
+  const typeLabel = applicationTypeLabel[app.type].toLowerCase();
+  const res = await sendEmail({
+    to: { email: inbox },
+    replyTo: { email: app.email, name: app.name },
+    subject: `Copy of ${typeLabel} application from ${app.name}`,
+    html: emailLayout(
+      `<p>Here is a copy of the ${typeLabel} application from <strong>${escapeHtml(app.name)}</strong>${catNames ? ` (${escapeHtml(catNames)})` : ""}. A printable PDF is attached.</p>
+<p>${escapeHtml(app.email)}<br>${escapeHtml(app.phone)}</p>
+<p>${button(`${site.url}/admin/applications/${app.id}`, "Open the application")}</p>`,
+    ),
+    attachments: [applicationPdf(app, catNames)],
+  });
+  if (res.ok) return { ok: true, message: `Sent to ${inbox}.` };
+  return { error: res.skipped ? "Email isn't set up yet." : "The email failed to send. Please try again." };
 }
 
 export async function approveApplication(_prev: FormState, fd: FormData): Promise<FormState> {

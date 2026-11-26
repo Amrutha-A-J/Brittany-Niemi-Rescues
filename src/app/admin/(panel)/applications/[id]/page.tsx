@@ -2,7 +2,7 @@ import { DemoApplication } from "@/components/demo/DemoAdmin";
 import { isDemo } from "@/lib/demo/config";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ApplicationActions } from "@/components/admin/ApplicationActions";
+import { ApplicationActions, EmailCopyButton } from "@/components/admin/ApplicationActions";
 import { ActionForm, ConfirmSubmit, SubmitButton } from "@/components/admin/Forms";
 import { ServerMeetingList as MeetingList } from "@/components/admin/ServerMeetingList";
 import { ApplicationSummary } from "@/components/admin/ApplicationSummary";
@@ -110,6 +110,9 @@ export default async function ApplicationPage({ params }: PageProps<"/admin/appl
                     Finalise adoption of {c.name} →
                   </Link>
                 ))}
+          </Card>
+          <Card title="Copy">
+            <EmailCopyButton id={app.id} />
           </Card>
           <Card title="Private notes">
             <ActionForm action={saveNotes}>

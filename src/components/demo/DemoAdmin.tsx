@@ -37,7 +37,7 @@ import { APPLICATION_TABS, applicationListMeta } from "@/lib/admin/application-t
 import { AdminNav } from "../admin/AdminNav";
 import { ThemeToggle } from "../site/ThemeToggle";
 import { AdoptionForm, type ApplicantOption } from "../admin/AdoptionForm";
-import { ApplicationActions } from "../admin/ApplicationActions";
+import { ApplicationActions, EmailCopyButton } from "../admin/ApplicationActions";
 import { AuthCard } from "../admin/AuthCard";
 import { CatForm } from "../admin/CatForm";
 import { FilterableCatList } from "../admin/FilterableCatList";
@@ -719,6 +719,9 @@ export const DemoApplication = suspended(function DemoApplication({ id: routeId 
                     Finalise adoption of {c.name} →
                   </Link>
                 ))}
+          </Card>
+          <Card title="Copy">
+            <EmailCopyButton id={app.id} action={async () => ({ ok: true, message: EMAIL_NOTE.trim() || "Sent." })} />
           </Card>
           <Card title="Private notes">
             <ActionForm

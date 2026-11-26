@@ -4,6 +4,7 @@ import { parseApplication, looksLikeSpam } from "./application-validate";
 import { applicationTypeLabel } from "./forms";
 import { namesList } from "./cats";
 import { button, emailLayout, escapeHtml, rescueInbox, sendTemplate } from "./email";
+import { applicationPdf } from "./application-copy";
 import { site } from "./site";
 import { all, batch, insertSql, newId } from "./db";
 import type { ApplicationType } from "./types";
@@ -66,6 +67,13 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
   const typeLabel = applicationTypeLabel[type].toLowerCase();
   const reviewUrl = `${site.url}/admin/applications/${id}`;
   const inbox = await rescueInbox();
+  const pdf = applicationPdf(
+    {
+      id, type, cat_id: cats[0]?.id ?? null, status: "new", name: contact.name, email: contact.email, phone: contact.phone,
+      city: contact.city, answers, admin_notes: "", decided_at: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    },
+    catNames,
+  );
 
   await Promise.all([
     inbox &&
@@ -73,6 +81,7 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
         template: "newApplication",
         to: { email: inbox },
         replyTo: { email: contact.email, name: contact.name },
+        attachments: [pdf],
         params: {
           type: typeLabel,
           cat_names: catNames,

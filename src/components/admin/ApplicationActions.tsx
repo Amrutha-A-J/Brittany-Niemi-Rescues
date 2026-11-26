@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { approveApplication, rejectApplication, scheduleMeeting } from "@/lib/admin/application-actions";
+import { approveApplication, rejectApplication, resendApplicationCopy, scheduleMeeting } from "@/lib/admin/application-actions";
 import type { FormState } from "@/lib/admin/auth-actions";
 import { StatusMessage, SubmitButton } from "./Forms";
 import { site } from "@/lib/site";
@@ -132,6 +132,20 @@ function DecisionForm({
       )}
       <SubmitButton className={kind === "approve" ? "btn-primary" : "btn-danger"} pendingText="Saving…">
         {kind === "approve" ? "Approve" : "Reject"}
+      </SubmitButton>
+      <StatusMessage state={state} />
+    </form>
+  );
+}
+
+/** Emails the application, with a printable PDF, to the rescue's inbox. */
+export function EmailCopyButton({ id, action = resendApplicationCopy }: { id: string; action?: Action }) {
+  const [state, formAction] = useActionState<FormState, FormData>(action, {});
+  return (
+    <form action={formAction} className="space-y-3">
+      <input type="hidden" name="id" value={id} />
+      <SubmitButton className="btn-outline" pendingText="Sending…">
+        Email a copy (PDF) to Brittany
       </SubmitButton>
       <StatusMessage state={state} />
     </form>
