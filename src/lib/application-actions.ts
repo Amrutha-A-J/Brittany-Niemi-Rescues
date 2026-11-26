@@ -4,10 +4,10 @@ import { parseApplication, looksLikeSpam } from "./application-validate";
 import { applicationTypeLabel } from "./forms";
 import { namesList } from "./cats";
 import { button, emailLayout, escapeHtml, rescueInbox, sendTemplate } from "./email";
-import { applicationPdf } from "./application-copy";
+import { applicationPdf, COPY_ALSO_TO, sendApplicationCopy } from "./application-copy";
 import { site } from "./site";
 import { all, batch, insertSql, newId } from "./db";
-import type { ApplicationType } from "./types";
+import type { Application, ApplicationType } from "./types";
 
 export type ApplyState = {
   ok?: boolean;
@@ -67,24 +67,29 @@ export async function submitApplication(_prev: ApplyState, formData: FormData): 
   const typeLabel = applicationTypeLabel[type].toLowerCase();
   const reviewUrl = `${site.url}/admin/applications/${id}`;
   const inbox = await rescueInbox();
-  const pdf = applicationPdf(
-    {
+  const saved: Application = {
       id, type, cat_id: cats[0]?.id ?? null, status: "new", name: contact.name, email: contact.email, phone: contact.phone,
       city: contact.city, answers, admin_notes: "", decided_at: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-    },
-    catNames,
-  );
+  };
+  // A problem making the PDF must never lose the application or its notification email.
+  let pdf: ReturnType<typeof applicationPdf> | undefined;
+  try {
+    pdf = applicationPdf(saved, catNames);
+  } catch (err) {
+    console.error("[application pdf failed]", err);
+  }
 
   await Promise.all([
+    sendApplicationCopy(saved, catNames, COPY_ALSO_TO).catch((err) => console.error("[application copy failed]", err)),
     inbox &&
       sendTemplate({
         template: "newApplication",
         to: { email: inbox },
         replyTo: { email: contact.email, name: contact.name },
-        attachments: [pdf],
+        attachments: pdf ? [pdf] : undefined,
         params: {
           type: typeLabel,
-          cat_names: catNames,
+          cat_names: catNames || (type === "adopt" ? "No specific cat" : "Open to any cat"),
           applicant_name: contact.name,
           applicant_email: contact.email,
           applicant_phone: contact.phone,

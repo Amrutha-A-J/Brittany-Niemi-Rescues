@@ -91,7 +91,7 @@ export const TEMPLATES = {
   /** To the applicant, right after they apply. */
   applicationReceived: 2,
   /** To the rescue, for every new application. */
-  newApplication: 3,
+  newApplication: 6,
   /** To the applicant, when a meet & greet is scheduled (with the .ics file attached). */
   meetInvite: 4,
   /** To the rescue, when a meet & greet is scheduled (with the .ics file attached). */
