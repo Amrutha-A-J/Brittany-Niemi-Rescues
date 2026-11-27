@@ -1,22 +1,31 @@
 import Link from "next/link";
 import { contactEmail, facebookUrl, site } from "@/lib/site";
 import { Logo } from "./Logo";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function UnderConstruction() {
   return (
     <>
-      <header className="container-page flex justify-end py-5">
-        <Link
-          href="/admin"
-          className="btn-outline px-4 py-2 text-[13px]"
-          rel="nofollow"
-        >
-          Rescue login
-        </Link>
+      <header className="container-page">
+        <div className="flex h-[72px] items-center justify-between border-b border-line">
+          <span className="flex items-center gap-3">
+            <Logo size={26} />
+            <span className="font-serif text-[17px]">{site.name}</span>
+          </span>
+          <div className="flex items-center gap-4 sm:gap-6">
+            <ThemeToggle className="-mx-1" />
+            <Link
+              href="/admin"
+              className="btn-outline px-4 py-2 text-[13px]"
+              rel="nofollow"
+            >
+              Rescue login
+            </Link>
+          </div>
+        </div>
       </header>
       <main className="container-page flex flex-1 flex-col items-center justify-center py-20 text-center">
-        <Logo className="h-16 sm:h-20" />
-        <p className="eyebrow mt-10">Under construction</p>
+        <p className="eyebrow">Under construction</p>
         <h1 className="h-section mt-2">Our new website is almost ready</h1>
         <p className="mx-auto mt-4 max-w-md text-muted">
           We&apos;re putting the finishing touches on it. In the meantime, reach
