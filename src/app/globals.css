@@ -2,14 +2,15 @@
 
 :root {
   color-scheme: light dark;
-  --ink: #111111;
-  --muted: #6b6b6b;
-  --faint: #9a9a9a;
-  --line: #e7e7e7;
-  --card: #f4f4f4;
-  --paper: #ffffff;
+  /* Soft charcoal on warm off-white rather than pure black on white, which is harsh on the eyes. */
+  --ink: #2b2926;
+  --muted: #6b6762;
+  --faint: #9a958f;
+  --line: #e6e2dc;
+  --card: #f2efea;
+  --paper: #faf8f5;
   /* Behind the admin panels */
-  --wash: #fafafa;
+  --wash: #f5f2ee;
   --danger: #b42318;
   --success: #1f7a4d;
 }
@@ -18,26 +19,26 @@
    (ThemeToggle sets data-theme on <html>). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ink: #f1f1f1;
-    --muted: #a8a8a8;
-    --faint: #767676;
-    --line: #2c2c2c;
-    --card: #1d1d1d;
-    --paper: #121212;
-    --wash: #0c0c0c;
+    --ink: #e7e4df;
+    --muted: #a6a29c;
+    --faint: #78746e;
+    --line: #34312d;
+    --card: #25231f;
+    --paper: #1b1a18;
+    --wash: #151412;
     --danger: #f97066;
     --success: #4cc38a;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --ink: #f1f1f1;
-  --muted: #a8a8a8;
-  --faint: #767676;
-  --line: #2c2c2c;
-  --card: #1d1d1d;
-  --paper: #121212;
-  --wash: #0c0c0c;
+  --ink: #e7e4df;
+  --muted: #a6a29c;
+  --faint: #78746e;
+  --line: #34312d;
+  --card: #25231f;
+  --paper: #1b1a18;
+  --wash: #151412;
   --danger: #f97066;
   --success: #4cc38a;
 }
