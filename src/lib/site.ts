@@ -15,6 +15,7 @@ export const site = {
 };
 
 export const instagramUrl = `https://www.instagram.com/${site.instagram}/`;
+export const contactEmail = "brittany.niemi.rescues@outlook.com";
 export const facebookUrl = "https://www.facebook.com/p/Brittany-Niemi-Rescues-61560757773145/";
 
 export const socialLinks = [

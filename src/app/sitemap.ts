@@ -1,10 +1,12 @@
 import type { MetadataRoute } from "next";
 import { getAdoptableCats } from "@/lib/data";
+import { underConstruction } from "@/lib/launch";
 import { site } from "@/lib/site";
 
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (underConstruction) return [];
   const cats = await getAdoptableCats();
   const latest = cats.reduce((d, c) => (c.updated_at > d ? c.updated_at : d), "2026-01-01");
   return [
